@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dârü'l-İlim ve Hikmet: İslami ve Sosyal İlimler Tedrisat Simülasyonu</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Amiri & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Özel CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="islamic-pattern min-h-screen text-slate-800 antialiased selection:bg-emerald-200 selection:text-emerald-900">
+
+  <!-- ==================== 1. KURULUM SİHİRBAZI EKRANI (İLK AÇILIŞ) ==================== -->
+  <div id="setupScreen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="ottoman-card max-w-3xl w-full p-8 md:p-10 rounded-3xl shadow-2xl border border-amber-200/80 bg-white/95">
+      <div class="text-center space-y-2">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-800 text-amber-400 mb-2 border border-amber-500/30 shadow-lg">
+          <i data-lucide="scroll-text" class="w-8 h-8"></i>
+        </div>
+        <h1 class="text-3xl font-bold font-amiri text-emerald-950">
+          Hoşgeldin Üstad
+        </h1>
+        <div class="text-slate-700 max-w-xl mx-auto leading-relaxed space-y-1">
+          <p class="text-sm font-medium italic">Niyet hayır, âkıbet hayır, tevfîk Allah'tan</p>
+          <p class="text-xl font-bold font-amiri text-emerald-900 tracking-wide">Virâ bismillâh</p>
+        </div>
+        <!-- Google Auth Giriş Alanı (Kurulum Ekranı) -->
+        <div id="authContainerSetup" class="pt-2 flex justify-center"></div>
+      </div>
+
+      <form onsubmit="handleSetupSubmit(event)" class="mt-8 space-y-6">
+        <!-- CİNSİYET MODU SEÇİMİ (KIZ / ERKEK PROGRAMI) -->
+        <div class="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 space-y-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-emerald-950">
+            Tedrisat Programı Türü (Mahremiyet ve Kadro Yapısı)
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <label class="flex items-center gap-3 p-3 rounded-xl border border-blue-200 bg-white cursor-pointer hover:border-blue-400 transition">
+              <input type="radio" name="gender" value="male" checked class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+              <div>
+                <span class="font-bold text-slate-900 block">Beyefendiler Tedrisat Programı</span>
+                <span class="text-[11px] text-slate-500">Erkek talebeler, erkek müderrisler ve erkek yurt idaresi.</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-xl border border-pink-200 bg-white cursor-pointer hover:border-pink-400 transition">
+              <input type="radio" name="gender" value="female" class="w-4 h-4 text-pink-600 focus:ring-pink-500">
+              <div>
+                <span class="font-bold text-slate-900 block">Hanımefendiler Tedrisat Programı</span>
+                <span class="text-[11px] text-slate-500">Kız talebeler, hanım müderrisler, hanım müdire ve tam mahremiyet.</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Kurum Adı -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+            Kurumunuzun Adı
+          </label>
+          <input 
+            type="text" 
+            id="setupInstName" 
+            required 
+            value="Dârü'l-Fünûn İslami ve Sosyal İlimler Tedris Merkezi" 
+            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm bg-slate-50/50"
+            placeholder="Örn: İlim ve Medeniyet Araştırma Vakfı"
+          >
+        </div>
+
+        <!-- Eğitim Süresi ve Zorluk Seviyesi -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+              Tedrisat Süresi
+            </label>
+            <select id="setupDuration" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm bg-slate-50/50">
+              <option value="5" selected>5 Yıl (1 Yıl Hazırlık + 4 Yıl İhtisas ve Sosyal Bilimler)</option>
+              <option value="4">4 Yıl (Üniversiteyle Birebir Senkronize İlim Halkası)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+              Disiplin ve Zorluk Seviyesi
+            </label>
+            <select id="setupDifficulty" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm bg-slate-50/50">
+              <option value="zorlayici" selected>Zorlayıcı Seviye (Başlangıç Bursu: 5.000 ₺ / ay)</option>
+              <option value="orta">Orta Seviye (Başlangıç Bursu: 3.000 ₺ / ay)</option>
+              <option value="rahat">Rahat Seviye (Başlangıç Bursu: 1.000 ₺ / ay)</option>
+            </select>
+            <p class="text-[11px] text-slate-500 mt-1">
+              <strong>Zorlayıcı:</strong> Alttan ders bırakana burs kesilir, 3 ihtarda dönem sonu ihraç edilir.
+            </p>
+          </div>
+        </div>
+
+        <!-- Öğrenci Kabul Kriterleri -->
+        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
+          <span class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+            Öğrenci Kabul Kriterleri (Çoktan Seçmeli)
+          </span>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="critYks" checked class="rounded text-emerald-700 w-4 h-4">
+              <span>YKS Derecesi ve İlahiyat Başarısı (Yalnızca İstanbul Fakülteleri)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="critSchools" checked class="rounded text-emerald-700 w-4 h-4">
+              <span>Seçkin İHL & Fen Liselerine Öncelik (Kartal, Kadıköy, Beyoğlu vb.)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="critVision" checked class="rounded text-emerald-700 w-4 h-4">
+              <span>Kurum vizyonuyla uyumlu tefekkür ve hizmet gayesi</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="critInterview" checked class="rounded text-emerald-700 w-4 h-4">
+              <span>Bizzat 6 sorulu yüz yüze mülakat değerlendirmesi</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="critArabic" class="rounded text-emerald-700 w-4 h-4">
+              <span>Arapça ve medrese altyapısı mevcudiyeti</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 50 DERSLİK TEDRİSAT VE SEMİNER DAĞILIM MASASI (BAŞLANGIÇTA SERBEST BELİRLEME) -->
+        <div class="p-4 md:p-5 rounded-2xl border border-emerald-300 bg-emerald-50/30 space-y-3">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <h3 class="font-bold text-sm text-emerald-950 font-amiri flex items-center gap-2">
+                <i data-lucide="book-open" class="text-emerald-800 w-4 h-4"></i>
+                Tedrisat Seminerleri ve Ders Dağılım Masası (50 Derslik İlim Havuzu)
+              </h3>
+              <p class="text-[11px] text-slate-600 mt-0.5">
+                Hazır kalıp paket yerine her dersin hangi sınıf seviyesinde, hangi dönemde ve haftada kaç saat okutulacağını bizzat belirleyiniz.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="loadDefaultCurriculumPreset()" class="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[11px] font-bold transition shadow-sm">
+                Önerilen Kadim Dağılımı Doldur
+              </button>
+              <button type="button" onclick="clearCurriculumAssignments()" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[11px] font-semibold transition">
+                Tümünü Sıfırla
+              </button>
+            </div>
+          </div>
+
+          <!-- Arama ve Filtre -->
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <input 
+              type="text" 
+              id="setupCourseSearch" 
+              placeholder="Ders kodu veya adı ara..." 
+              oninput="filterSetupCoursesList()" 
+              class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none flex-1 min-w-[180px]"
+            >
+            <select id="setupCourseBranchFilter" onchange="filterSetupCoursesList()" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white">
+              <option value="all">Tüm Branşlar (50 Ders)</option>
+              <option value="Klasik Arapça">Klasik Arapça (Sarf & Nahiv)</option>
+              <option value="Modern Arapça">Modern Arapça (Muhadese)</option>
+              <option value="Fıkıh ve Usul">Fıkıh ve Usûl-i Fıkıh</option>
+              <option value="Hadis ve Tefsir">Hadis ve Tefsir</option>
+              <option value="Kelam ve Mantık">Kelam, Mantık & Felsefe</option>
+              <option value="Sosyal Bilimler">Sosyal Bilimler & Medeniyet</option>
+              <option value="Sanat ve Metodoloji">Sanat & Metodoloji</option>
+            </select>
+          </div>
+
+          <!-- Ders Listesi (Kaydırılabilir) -->
+          <div id="setupCoursesListContainer" class="max-h-[360px] overflow-y-auto space-y-2 pr-1 border border-slate-200 rounded-xl p-2 bg-white divide-y divide-slate-100">
+            <!-- JS ile 50 ders doldurulur -->
+          </div>
+        </div>
+
+        <!-- Bilgi Kutusu -->
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 leading-relaxed">
+          <i data-lucide="info" class="inline w-4 h-4 mr-1 text-amber-700"></i>
+          <strong>Kurallar:</strong> İtibar 35 ile başlar, senede min 2, ortalama 3, maks 5 puan artar. Başlangıç bursları 5.000 / 3.000 / 1.000 ₺'dir. Yeni yıl bursunu her yılbaşında bizzat belirlersiniz. Yıllık kontenjan 1. yıl 15 talebedir, her yıl +5 artarak 40'a ulaşır. Aylık sabit esnaf geliri en az 400.000 ₺'dir.
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full py-3.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-sm"
+        >
+          <i data-lucide="compass"></i>
+          Kurumu İnşa Et ve Tedrisatı Başlat
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 2. ANA YÖNETİM PANELİ (DASHBOARD) ==================== -->
+  <div id="dashboardScreen" class="hidden min-h-screen flex flex-col">
+    <!-- Üst Başlık ve Durum Çubuğu -->
+    <header class="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-3">
+        <!-- Sol: Logo ve Kurum Bilgisi -->
+        <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-800 text-amber-400 flex items-center justify-center font-bold text-lg shadow border border-amber-500/30">
+              <i data-lucide="landmark" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h1 id="headerInstName" class="font-bold text-slate-900 text-sm md:text-base font-amiri leading-tight">
+                Dârü'l-İlim Akademisi
+              </h1>
+              <div class="flex items-center gap-2 text-[11px] text-slate-500">
+                <span id="headerAcademicYear" class="font-semibold text-emerald-800">1. Akademik Yıl</span>
+                <span>•</span>
+                <span id="headerDate" class="text-slate-700">1 Ağustos</span>
+                <span id="headerGenderBadge"></span>
+                <span id="headerBuildingBadge"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="md:hidden flex items-center gap-2">
+            <button onclick="toggleNotificationsDrawer()" class="p-2 text-slate-600 hover:text-emerald-800 relative">
+              <i data-lucide="bell" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Orta: Finans & Metrik Rozetleri -->
+        <div class="flex flex-wrap items-center gap-3 text-xs w-full md:w-auto justify-center">
+          <div class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Vakıf Kasası</div>
+            <div id="headerBudget" class="text-sm font-bold text-emerald-700">650.000 ₺</div>
+          </div>
+
+          <div class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Genel İtibar</div>
+            <div class="flex items-center gap-1">
+              <span id="headerReputation" class="text-sm font-bold text-amber-800">35 / 100</span>
+              <span id="headerReputationGain" class="text-[10px] text-slate-400">(Bu Yıl: +0)</span>
+            </div>
+          </div>
+
+          <div class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Aktif Talebe</div>
+            <div id="headerStudentCount" class="text-sm font-bold text-slate-800">0 Talebe</div>
+          </div>
+
+          <div class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Aylık Talebe Bursu</div>
+            <div id="headerStipend" class="text-sm font-bold text-emerald-800">5.000 ₺/ay</div>
+          </div>
+        </div>
+
+        <!-- Sağ: Google Auth, Zaman İlerleme ve Bildirim -->
+        <div class="flex items-center gap-2">
+          <!-- Google ile Giriş & Kullanıcı Profili -->
+          <div id="authContainerHeader" class="flex items-center"></div>
+
+          <button onclick="handleAdvanceOneDay()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-lg text-xs transition border border-slate-300 flex items-center gap-1">
+            <i data-lucide="play" class="w-3.5 h-3.5"></i> +1 Gün
+          </button>
+          <button onclick="handleAdvanceNextEvent()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg text-xs transition shadow flex items-center gap-1">
+            <i data-lucide="fast-forward" class="w-3.5 h-3.5"></i> Etkinliğe Git
+          </button>
+          <button onclick="handleAdvanceOneMonth()" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs transition shadow">
+            +1 Ay
+          </button>
+          <button onclick="toggleNotificationsDrawer()" class="hidden md:flex p-2 text-slate-600 hover:text-emerald-800 rounded-lg border border-slate-200 bg-slate-50">
+            <i data-lucide="bell" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Ana Gövde -->
+    <main class="max-w-7xl mx-auto px-4 py-6 w-full flex-1 space-y-6">
+
+      <!-- 1 AYLIK İNTERAKTİF TAKVİM BİLEŞENİ (ÖNCEKİ / SONRAKİ AY GEZİNTİSİ & İDARE / ÖĞRENCİ TAKVİMİ SEÇİMİ) -->
+      <section class="ottoman-card p-5 rounded-2xl border bg-white/95 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <h3 id="calendarMonthTitle" class="font-bold text-slate-900 text-sm md:text-base font-amiri flex items-center gap-2">
+              <i data-lucide="calendar" class="text-emerald-700 w-4 h-4"></i>
+              Ağustos Ayı Tedrisat Takvimi
+            </h3>
+            <!-- Önceki / Sonraki Ay Okları -->
+            <div class="flex items-center gap-1">
+              <button onclick="handleCalPrevMonth()" class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs transition" title="Önceki Aya Bak">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+              </button>
+              <button onclick="handleCalNextMonth()" class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs transition" title="Sonraki Aya Bak">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </button>
+              <button onclick="handleCalResetMonth()" class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-semibold hover:bg-emerald-100 transition">
+                Mevcut Ay
+              </button>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 text-xs">
+            <!-- Takvim Görünümü Toggle: İdare Takvimi vs Öğrenci Tedrisat & Tatil Takvimi -->
+            <button onclick="handleToggleCalendarMode()" id="calModeBtn" class="px-3 py-1 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold transition flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-700"></i>
+              <span id="calModeLabel">[İdare Takvimi]</span>
+            </button>
+
+            <div class="flex items-center gap-3 text-[11px]">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> Bugün</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Hadise / İmtihan</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="calendarGrid" class="calendar-grid">
+          <!-- JS ile doldurulur -->
+        </div>
+      </section>
+
+      <!-- SEKMELER MENÜSÜ (10 SEKME) -->
+      <div class="border-b border-slate-200 flex flex-wrap gap-1 text-xs md:text-sm">
+        <button onclick="switchTab('students')" id="tabBtn_students" class="tab-btn px-4 py-3 border-b-2 font-bold border-emerald-700 text-emerald-800 bg-emerald-50 rounded-t-xl transition flex items-center gap-2">
+          <i data-lucide="graduation-cap" class="w-4 h-4"></i> Talebeler & Mülakat
+        </button>
+        <button onclick="switchTab('curriculum')" id="tabBtn_curriculum" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
+          <i data-lucide="book-open" class="w-4 h-4"></i> Seminerler
+        </button>
+        <button onclick="switchTab('scholars')" id="tabBtn_scholars" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
+          <i data-lucide="award" class="w-4 h-4"></i> Hoca Kadrosu & Pazar
+        </button>
+        <button onclick="switchTab('staff')" id="tabBtn_staff" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
+          <i data-lucide="users" class="w-4 h-4"></i> Personel & İdare
+        </button>
+        <button onclick="switchTab('accounting')" id="tabBtn_accounting" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
+          <i data-lucide="calculator" class="w-4 h-4"></i> Bilanço & Muhasebe
+        </button>
+        <button onclick="switchTab('dorm')" id="tabBtn_dorm" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
+          <i data-lucide="home" class="w-4 h-4"></i> Binalar & Talebe Yurdu
+        </button>
+        <button onclick="switchTab('donors')" id="tabBtn_donors" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
+          <i data-lucide="handshake" class="w-4 h-4"></i> 40 Hayırsever
+        </button>
+        <button onclick="switchTab('peers')" id="tabBtn_peers" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
+          <i data-lucide="scale" class="w-4 h-4"></i> Kardeş Kurumlar
+        </button>
+        <button onclick="switchTab('stats')" id="tabBtn_stats" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
+          <i data-lucide="bar-chart-3" class="w-4 h-4"></i> İstatistikler
+        </button>
+        <button onclick="switchTab('graduates')" id="tabBtn_graduates" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
+          <i data-lucide="scroll" class="w-4 h-4"></i> Mezunlar & Raporlar
+        </button>
+      </div>
+
+      <!-- SEKME İÇERİĞİ -->
+      <div id="tabContentContainer" class="pb-12">
+        <!-- JS ile çizilir -->
+      </div>
+    </main>
+
+    <!-- Alt Bilgi -->
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500">
+      <div class="max-w-7xl mx-auto px-4 flex justify-between items-center">
+        <span>Dârü'l-İlim ve Hikmet Simülatörü v2.6 — İSM, İSAR ve Yavuz Selim Vakfı Modeli</span>
+        <button onclick="resetGameAction()" class="text-red-500 hover:underline text-[11px]">
+          Oyunu Sıfırla
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ==================== 3. MODALLAR VE DİYALOGLAR ==================== -->
+
+  <!-- A) BİZZAT MÜLAKAT ODASI -->
+  <div id="interviewModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="ottoman-card max-w-2xl w-full p-6 rounded-3xl bg-white shadow-2xl border border-amber-300 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Mülakat Heyeti — Birebir Talebe Tespiti</span>
+          <h3 id="candName" class="text-lg font-bold text-slate-900 font-amiri">Talebe Adayı</h3>
+        </div>
+        <button onclick="closeInterviewModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-2xl border border-slate-200">
+        <div>
+          <span class="text-slate-400">Memleket & Lise:</span>
+          <div id="candCitySchool" class="font-semibold text-slate-800">-</div>
+        </div>
+        <div>
+          <span class="text-slate-400">Aile Durumu:</span>
+          <div id="candFamily" class="font-semibold text-slate-800">-</div>
+        </div>
+        <div>
+          <span class="text-slate-400">YKS Alanı & Sıralaması:</span>
+          <div id="candYks" class="font-semibold text-emerald-800">-</div>
+        </div>
+        <div>
+          <span class="text-slate-400">Kabul Edildiği İstanbul Fakültesi:</span>
+          <div id="candGano" class="font-semibold text-slate-800">-</div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-700">Mülakat Mülahazaları & Zaaf Tespiti (6 Soru):</label>
+        <div id="interviewQuestionsList" class="space-y-2"></div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <span id="candRemainingCount" class="text-xs text-slate-400"></span>
+        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+          <button onclick="handleRejectCandidate()" class="px-3 py-2 bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 text-xs font-semibold rounded-xl transition border border-slate-200">
+            Adayı Reddet
+          </button>
+          <button onclick="handleAcceptCandidate('ihtisas_ileri')" class="px-3 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold rounded-xl shadow transition" title="Hazırlıkta gözleme al, sene sonunda ileri halkaya dahil et">
+            İhtisas Adayı Olarak Al
+          </button>
+          <button onclick="handleAcceptCandidate('standart')" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow transition">
+            Kuruma Kabul Et
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B) DÖNEM SONU İDARİ TOPLANTI MODALI -->
+  <div id="adminMeetingModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="adminMeetingContent" class="ottoman-card max-w-3xl w-full p-6 rounded-3xl bg-white shadow-2xl border border-purple-300 max-h-[90vh] overflow-y-auto">
+      <!-- JS ile doldurulur -->
+    </div>
+  </div>
+
+  <!-- C) ÖĞRENCİ - İDARE BULUŞMASI MODALI -->
+  <div id="studentMeetingModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="studentMeetingContent" class="ottoman-card max-w-xl w-full p-6 rounded-3xl bg-white shadow-2xl border border-emerald-300 max-h-[90vh] overflow-y-auto">
+      <!-- JS ile doldurulur -->
+    </div>
+  </div>
+
+  <!-- D) YURT MÜDÜRÜ İSTİŞARE VE TEFTİŞ RAPORU MODALI -->
+  <div id="dormReportModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="dormReportContent" class="ottoman-card max-w-2xl w-full p-6 rounded-3xl bg-white shadow-2xl border border-emerald-300 max-h-[90vh] overflow-y-auto">
+      <!-- JS ile doldurulur -->
+    </div>
+  </div>
+
+  <!-- E) 10 GÜNLÜK BİREBİR TALEBE HASBİHAL VE İSTİŞARE MODALI -->
+  <div id="studentAppointmentModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="studentAppointmentContent" class="ottoman-card max-w-xl w-full p-6 rounded-3xl bg-white shadow-2xl border border-blue-300 max-h-[90vh] overflow-y-auto">
+      <!-- JS ile doldurulur -->
+    </div>
+  </div>
+
+  <!-- F) TALEBE PROFİL VE AYLIK MÜSPET/MENFİ RAPORLAR MODALI -->
+  <div id="studentDetailModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="studentDetailContent" class="ottoman-card max-w-2xl w-full p-6 rounded-3xl bg-white shadow-2xl border border-slate-300 max-h-[90vh] overflow-y-auto">
+      <!-- JS ile doldurulur -->
+    </div>
+  </div>
+
+  <!-- G) YENİ YIL ÖZEL BURS BELİRLEME MODALI -->
+  <div id="annualStipendModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="ottoman-card max-w-md w-full p-6 rounded-3xl bg-white shadow-2xl border border-emerald-300 space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl font-bold">
+          💰
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900 font-amiri">Yeni Akademik Yıl Talebe Bursu</h3>
+          <p class="text-xs text-slate-500">Mütevelli Heyeti Kararıyla Aylık Burs Tespiti</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Yeni akademik yıla girerken talebelerin aylık burs miktarını belirleyiniz. Enflasyon, vakıf bütçesi ve hayırsever bağışlarını gözeterek makul bir miktar tayin ediniz.
+      </p>
+
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+        <div class="flex justify-between">
+          <span class="text-slate-500">Mevcut Burs:</span>
+          <span id="annualStipendCurrent" class="font-bold text-slate-800">5.000 ₺/ay</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Kasadaki Bütçe:</span>
+          <span id="annualStipendBudget" class="font-bold text-emerald-700">650.000 ₺</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Yeni Aylık Burs Miktarı (₺ / ay):</label>
+        <input type="number" id="annualStipendInput" step="500" min="500" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-600 text-sm font-bold bg-white" value="6000">
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="handleConfirmAnnualStipend()" class="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow transition">
+          Burs Miktarını Onayla ve Yürürlüğe Koy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- H) ÖNEMLİ OLAY & DÜĞÜN MODALI -->
+  <div id="eventModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="ottoman-card max-w-lg w-full p-6 rounded-3xl bg-white shadow-2xl border border-amber-300 space-y-4">
+      <h3 id="eventModalTitle" class="text-lg font-bold text-slate-900 font-amiri flex items-center gap-2">
+        Hadise Bildirimi
+      </h3>
+      <p id="eventModalBody" class="text-xs text-slate-600 leading-relaxed whitespace-pre-line"></p>
+      <div id="eventModalButtons" class="pt-3 border-t border-slate-100 space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- I) BİLDİRİM ÇEKMECESİ -->
+  <div id="notificationsDrawer" class="hidden fixed top-16 right-4 z-40 w-80 max-w-[90vw] ottoman-card rounded-2xl border bg-white shadow-2xl overflow-hidden">
+    <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+      <span class="font-bold text-xs text-slate-800">Kurum Hadiseleri & Bildirimler</span>
+      <button onclick="toggleNotificationsDrawer()" class="text-slate-400 hover:text-slate-600">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+    <div id="notificationsList" class="max-h-80 overflow-y-auto divide-y divide-slate-100"></div>
+  </div>
+
+  <!-- J) TALEBE İHTİSAS & TEDRİSAT PROGRAMI TASNİF ŞÛRASI MODALI -->
+  <div id="trackSelectionModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="ottoman-card max-w-4xl w-full p-6 md:p-8 rounded-3xl bg-white shadow-2xl border border-purple-300 space-y-5 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-900 flex items-center justify-center text-xl font-bold shadow-sm">
+            🌟
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900 font-amiri">Talebe İhtisas Programı Tasnif Şûrası</h3>
+            <p class="text-xs text-slate-500">Hazırlık ve Ara Sınıfları Tamamlayan Talebelerin İhtisas / Normal Tedrisat Yönlendirmesi</p>
+          </div>
+        </div>
+        <button onclick="closeTrackSelectionModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-3 bg-purple-50/70 rounded-2xl border border-purple-200 text-xs text-purple-950 leading-relaxed flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <strong>Şûra Rehberi:</strong> Yüksek istidat ve akademik başarı gösteren talebeleri <strong>İhtisas Programı</strong>'na tevcih ediniz. İhtisas talebeleri kadim medrese usûlü ileri metinleri ve mütalaa halkalarını takip eder.
+        </div>
+        <div class="flex gap-2">
+          <button onclick="setAllEligibleToIhtisas()" class="px-3 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-xl font-bold text-xs shadow-sm transition whitespace-nowrap">
+            Uygun Olanları (İstidat ≥ 70) İhtisasa Al
+          </button>
+          <button onclick="setAllToNormal()" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-semibold text-xs transition whitespace-nowrap">
+            Tümünü Normal Yap
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto border border-slate-200 rounded-2xl max-h-[420px] overflow-y-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="bg-slate-50 text-slate-600 uppercase text-[10px] font-semibold sticky top-0 bg-slate-50 z-10">
+            <tr>
+              <th class="py-3 px-4">Talebe Bilgisi</th>
+              <th class="py-3 px-4">Sınıf & Fakülte</th>
+              <th class="py-3 px-4">İstidat & Ahlak</th>
+              <th class="py-3 px-4">Başarı Notu</th>
+              <th class="py-3 px-4">Şûra Tavsiyesi</th>
+              <th class="py-3 px-4 text-center">Tedrisat Tercihi</th>
+            </tr>
+          </thead>
+          <tbody id="trackSelectionTableBody" class="divide-y divide-slate-100">
+            <!-- JS ile doldurulur -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div id="trackSelectionSummary" class="text-xs text-slate-600 font-medium"></div>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <button onclick="closeTrackSelectionModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">
+            Vazgeç
+          </button>
+          <button onclick="saveTrackSelection()" class="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-2">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            Tasnifi Onayla ve Yürürlüğe Koy
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- K) ATANAN SEMİNER DÜZENLEME MODALI -->
+  <div id="editSeminarModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="ottoman-card max-w-md w-full p-6 rounded-3xl bg-white shadow-2xl border border-emerald-300 space-y-4">
+      <div class="flex justify-between items-start border-b border-slate-100 pb-2">
+        <div>
+          <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider" id="editSeminarCode">KOD-101</span>
+          <h3 class="text-base font-bold text-slate-900 font-amiri" id="editSeminarName">Ders Adı</h3>
+        </div>
+        <button onclick="closeEditSeminarModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="editSeminarCourseId">
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Okutulacak Sınıf Seviyesi:</label>
+          <select id="editSeminarClassYear" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+            <option value="0">Hazırlık Sınıfı</option>
+            <option value="1">1. Sınıf</option>
+            <option value="2">2. Sınıf</option>
+            <option value="3">3. Sınıf</option>
+            <option value="4">4. Sınıf</option>
+            <option value="-1">❌ Müfredat Dışı (Kaldır)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Okutulacak Dönem:</label>
+          <select id="editSeminarSemester" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+            <option value="guz">Güz Dönemi</option>
+            <option value="bahar">Bahar Dönemi</option>
+            <option value="yillik">Yıllık (Güz & Bahar)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Haftalık Ders Saati:</label>
+          <select id="editSeminarHours" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+            <option value="2">2 saat / hafta</option>
+            <option value="3">3 saat / hafta</option>
+            <option value="4">4 saat / hafta</option>
+            <option value="6">6 saat / hafta</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex gap-2">
+        <button onclick="closeEditSeminarModal()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">
+          İptal
+        </button>
+        <button onclick="saveEditedSeminar()" class="w-1/2 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow transition">
+          Güncelle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE SDK (COMPAT SÜRÜMÜ) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="js/engine/firebaseSync.js"></script>
+
+  <!-- SCRIPT YÜKLEMELERİ (SIRALI) -->
+  <script src="js/data/buildings.js"></script>
+  <script src="js/data/courses.js"></script>
+  <script src="js/data/scholars.js"></script>
+  <script src="js/data/staff.js"></script>
+  <script src="js/data/donors.js"></script>
+  <script src="js/data/peerInstitutions.js"></script>
+  <script src="js/engine/studentEngine.js"></script>
+  <script src="js/engine/simulationEngine.js"></script>
+  <script src="js/ui/app.js"></script>
+</body>
+</html>
