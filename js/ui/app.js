@@ -98,25 +98,40 @@ function renderAll() {
   }
 }
 
-// Sol Açılır Menü (Sidebar Drawer) Kontrolleri
-function toggleSidebarMenu() {
-  const drawer = document.getElementById("sidebarDrawer");
-  const backdrop = document.getElementById("sidebarBackdrop");
-  if (!drawer) return;
-  const isClosed = drawer.classList.contains("-translate-x-full");
-  if (isClosed) {
-    drawer.classList.remove("-translate-x-full");
-    if (backdrop) backdrop.classList.remove("hidden");
-  } else {
-    closeSidebarMenu();
+// ==================== ÜST PANEL SARKAN MENÜLER KONTROLÜ ====================
+function toggleNavMenu(event, groupId) {
+  if (event) {
+    event.stopPropagation();
+  }
+  const allGroups = document.querySelectorAll(".nav-dropdown-group");
+  const target = document.getElementById(groupId);
+  const isOpen = target && target.classList.contains("is-open");
+  
+  allGroups.forEach(g => g.classList.remove("is-open"));
+  if (target && !isOpen) {
+    target.classList.add("is-open");
   }
 }
 
-function closeSidebarMenu() {}
+function closeAllNavMenus() {
+  document.querySelectorAll(".nav-dropdown-group").forEach(g => g.classList.remove("is-open"));
+}
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".nav-dropdown-group")) {
+    closeAllNavMenus();
+  }
+});
+
+// Eski çağrılar için boş uyumluluk fonksiyonları
+function closeSidebarMenu() {
+  closeAllNavMenus();
+}
 function toggleSidebarMenu() {}
 
 // Sekme Değiştir (Üst menüden doğrudan ilgili içeriğe geçiş yapar)
 function switchTab(tabName) {
+  closeAllNavMenus();
   currentTab = tabName;
   renderAll();
 
