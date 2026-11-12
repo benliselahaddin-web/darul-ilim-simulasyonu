@@ -962,10 +962,306 @@ const COURSES_DATA = [
     difficulty: 5,
     description: "Ulema heyeti huzurunda tez savunması, geleneksel senedli icazet takdimi ve mezuniyet merasimi.",
     impact: { sanatKultur: 10, sosyalBilimler: 6, arapcaDil: 4, fıkıh: 4, kelamFelsefe: 4, hadisTefsir: 4 }
+  },
+  // ==================== OSMANLI MEDRESESİ ZİRVE METİNLERİ VE EK DERS HAVUZU (51-60) ====================
+  {
+    id: 51,
+    code: "FIK-202",
+    name: "Mülteka'l-Ebhur & Dürerü'l-Hukkâm (Fıkıh)",
+    arabicName: "ملتقى الأبحر لإبراهيم الحلبي ودرر الحكام لملا خسرو",
+    branch: "Fıkıh ve Usul",
+    category: "islami_ilimler",
+    categoryLabel: "Temel İslami İlimler",
+    classYear: 1,
+    semester: "bahar",
+    semesterLabel: "Bahar",
+    weeklyHours: 4,
+    credit: 3,
+    textbook: "Mülteka'l-Ebhur (Halebî) & Dürerü'l-Hukkâm (Molla Hüsrev)",
+    isClassicMethod: true,
+    difficulty: 4,
+    ottomanLevel: 2,
+    description: "Osmanlı mahkemelerinde fetva ve kaza kanunnamesi gibi başvurulan temel muteber metinler.",
+    impact: { fıkıh: 9, arapcaDil: 3, sosyalBilimler: 2, kelamFelsefe: 1, hadisTefsir: 1, sanatKultur: 0 }
+  },
+  {
+    id: 52,
+    code: "FIK-303",
+    name: "Şerhu'l-Vikāye fî Halli Vikāyeti'r-Rivāye",
+    arabicName: "شرح الوقاية لصدر الشريعة الأصغر عبيد الله بن مسعود",
+    branch: "Fıkıh ve Usul",
+    category: "islami_ilimler",
+    categoryLabel: "Temel İslami İlimler",
+    classYear: 2,
+    semester: "guz",
+    semesterLabel: "Güz",
+    weeklyHours: 4,
+    credit: 3,
+    textbook: "Şerhu'l-Vikāye (Sadrüşşerîa el-Asgar)",
+    isClassicMethod: true,
+    difficulty: 5,
+    ottomanLevel: 3,
+    description: "Sahn-ı Semân medreselerinde okutulan muteber orta-ileri Hanefi furu-i fıkıh klasiği.",
+    impact: { fıkıh: 9, arapcaDil: 3, kelamFelsefe: 2, hadisTefsir: 1, sosyalBilimler: 0, sanatKultur: 0 }
+  },
+  {
+    id: 53,
+    code: "KLM-303",
+    name: "Hâşiye-i Tecrîd (Seyyid Şerif Cürcânî)",
+    arabicName: "حاشية التجريد للسيد الشريف الجرجاني على تجريد الاعتقاد",
+    branch: "Kelam ve Mantık",
+    category: "islami_ilimler",
+    categoryLabel: "Temel İslami İlimler",
+    classYear: 2,
+    semester: "bahar",
+    semesterLabel: "Bahar",
+    weeklyHours: 3,
+    credit: 2,
+    textbook: "Hâşiye-i Tecrîd (Cürcânî) & Şerhu't-Tecrîd",
+    isClassicMethod: true,
+    difficulty: 5,
+    ottomanLevel: 3,
+    description: "Felsefî kelamın derin meseleleri; mevcudat, imkân ve vücub delilleri Sahn medresesi seviyesinde okunur.",
+    impact: { kelamFelsefe: 10, arapcaDil: 3, fıkıh: 1, sosyalBilimler: 2, hadisTefsir: 0, sanatKultur: 0 }
+  },
+  {
+    id: 54,
+    code: "FEL-303",
+    name: "Hidâyetü'l-Hikme & Kadı Mîr Şerhi",
+    arabicName: "هداية الحكمة للأبهري مع شرح قاضي مير",
+    branch: "Kelam ve Mantık",
+    category: "sosyal_bilimler",
+    categoryLabel: "Akli İlimler & Felsefe",
+    classYear: 2,
+    semester: "bahar",
+    semesterLabel: "Bahar",
+    weeklyHours: 3,
+    credit: 2,
+    textbook: "Hidâyetü'l-Hikme (Ebherî) & Şerhu Kādî Mîr",
+    isClassicMethod: true,
+    difficulty: 5,
+    ottomanLevel: 3,
+    description: "Klasik tabiat felsefesi (tabiiyyat) ve metafizik (ilahiyyat) mebahisi.",
+    impact: { kelamFelsefe: 9, sosyalBilimler: 3, arapcaDil: 2, fıkıh: 1, hadisTefsir: 0, sanatKultur: 0 }
+  },
+  {
+    id: 55,
+    code: "HAD-202",
+    name: "Meşâriku'l-Envâri'n-Nebeviyye & Mesâbîh",
+    arabicName: "مشارق الأنوار النبوية ومصابيح السنة للبغوي",
+    branch: "Hadis ve Tefsir",
+    category: "islami_ilimler",
+    categoryLabel: "Temel İslami İlimler",
+    classYear: 1,
+    semester: "bahar",
+    semesterLabel: "Bahar",
+    weeklyHours: 3,
+    credit: 2,
+    textbook: "Meşâriku'l-Envâr (Sağānî) & Mesâbîhu's-Sünne (Begavî)",
+    isClassicMethod: true,
+    difficulty: 4,
+    ottomanLevel: 2,
+    description: "Osmanlı medreselerinde Buhârî ve Müslim rivayetlerinin cem edildiği muteber hadis mecmuası.",
+    impact: { hadisTefsir: 8, arapcaDil: 3, fıkıh: 2, kelamFelsefe: 1, sosyalBilimler: 1, sanatKultur: 1 }
+  },
+  {
+    id: 56,
+    code: "TEF-202",
+    name: "Medârikü't-Tenzîl ve Hakâiku't-Te'vîl (Nesefî)",
+    arabicName: "مدارك التنزيل وحقائق التأويل للإمام عبد الله النسفي",
+    branch: "Hadis ve Tefsir",
+    category: "islami_ilimler",
+    categoryLabel: "Temel İslami İlimler",
+    classYear: 1,
+    semester: "guz",
+    semesterLabel: "Güz",
+    weeklyHours: 3,
+    credit: 2,
+    textbook: "Medârikü't-Tenzîl (Ebu'l-Berekât en-Nesefî)",
+    isClassicMethod: true,
+    difficulty: 4,
+    ottomanLevel: 2,
+    description: "Hanefi kelam ve fıkıh çizgisini koruyan, Keşşâf ve Beyzâvî'nin muhassalı sayılan Osmanlı ders kitabı.",
+    impact: { hadisTefsir: 8, fıkıh: 3, arapcaDil: 3, kelamFelsefe: 2, sosyalBilimler: 0, sanatKultur: 0 }
+  },
+  {
+    id: 57,
+    code: "HAD-102",
+    name: "el-Erba'ûn (Kırk Hadis) & el-Manzûmetü'l-Beykūniyye",
+    arabicName: "الأربعون النووية والمنظومة البيقونية في المصطلح",
+    branch: "Hadis ve Tefsir",
+    category: "islami_ilimler",
+    categoryLabel: "Temel İslami İlimler",
+    classYear: 0,
+    semester: "guz",
+    semesterLabel: "Güz",
+    weeklyHours: 2,
+    credit: 2,
+    textbook: "el-Erba'ûn (İmam Nevevî) & Manzûmetü'l-Beykūniyye",
+    isClassicMethod: true,
+    difficulty: 2,
+    ottomanLevel: 1,
+    description: "Alet ilimleri başlangıcında ezberlenen usul-i hadis manzumesi ve dinin temel 40 hadis şerhi.",
+    impact: { hadisTefsir: 7, arapcaDil: 3, fıkıh: 2, kelamFelsefe: 1, sosyalBilimler: 0, sanatKultur: 1 }
+  },
+  {
+    id: 58,
+    code: "ALAN-501",
+    name: "4. Sınıf Alan Okuma & İleri Metin Tahlili (Özel Seminer)",
+    arabicName: "حلقة القراءة التخصصية وتحقيق المخطوطات لطلاب السنة الرابعة",
+    branch: "Fıkıh ve Usul",
+    category: "islami_ilimler",
+    categoryLabel: "İhtisas & İleri Araştırma",
+    classYear: 4,
+    semester: "yillik",
+    semesterLabel: "Yıllık",
+    weeklyHours: 2,
+    credit: 2,
+    textbook: "Öğrencinin Seçtiği İhtisas Alan Metni (Tahkikli Neşir)",
+    isClassicMethod: true,
+    difficulty: 5,
+    ottomanLevel: 4,
+    description: "4. sınıfa geçen talebelerin branşlaşma tercihlerine (Fıkıh, Kelam, Hadis, Tefsir, Sosyal Bilimler) göre okutulan 2 saatlik özel alan semineri.",
+    impact: { fıkıh: 6, kelamFelsefe: 6, hadisTefsir: 6, sosyalBilimler: 6, arapcaDil: 4, sanatKultur: 2 }
   }
 ];
 
-// Müfredat Misyon Paketleri
+// OSMANLI MEDRESESİ SEVİYE VE ESER HİYERARŞİSİ REHBERİ
+const OTTOMAN_HIERARCHY_LEVELS = {
+  1: {
+    level: 1,
+    name: "Seviye 1 (Hazırlık / İbtidâ-i Hâric)",
+    description: "Alet ilimleri başlangıcı; lügat, morfoloji, sentaks ve temel fıkıh-hadis ezberleri.",
+    texts: ["Emsile, Binâ, Maksûd", "Avâmil-i Cürcânî & Birgivî", "el-Îsâgûcî", "Muhtasaru'l-Kudûrî", "Kırk Hadis (Nevevî)", "Tefsîru'l-Celâleyn"]
+  },
+  2: {
+    level: 2,
+    name: "Seviye 2 (Orta / Hâric-Dâhil Medreseleri)",
+    description: "Sentaks tahlilleri, orta fıkıh ve kelam şerhleri; münazara melekeleri.",
+    texts: ["İzhâru'l-Esrâr", "el-Kâfiye & Şerhu Molla Câmî", "eş-Şemsiyye (Mantık)", "Mülteka'l-Ebhur & Dürer", "Şerhu'l-Akâid (Teftâzânî)", "el-Beykūniyye", "Meşâriku'l-Envâr", "Medârikü't-Tenzîl (Nesefî)"]
+  },
+  3: {
+    level: 3,
+    name: "Seviye 3 (İleri / Sahn-ı Semân)",
+    description: "Yüksek belâgat, fıkıh usûlü, felsefî kelam ve tafsili şerhler.",
+    texts: ["Muhtasaru'l-Me'ânî (Teftâzânî)", "Şerhu'l-Vikāye", "Menârü'l-Envâr & Şerhleri", "et-Tavzîh fî Halli't-Tenkîh", "Hâşiye-i Tecrîd (Cürcânî)", "Hidâyetü'l-Hikme (Kadı Mîr)", "Nuhbetü'l-Fikr", "Mesâbîhu's-Sünne", "Kadı Beyzâvî Tefsiri"]
+  },
+  4: {
+    level: 4,
+    name: "Seviye 4 (İhtisas / Süleymaniye & Dârülhadîs)",
+    description: "Zirve metinler; tahrir, tahkik, mezhepler arası mukayese ve şerh hâşiyeleri.",
+    texts: ["el-Hidâye (Merğînânî)", "et-Telvîh (Teftâzânî)", "Şerhu'l-Mevâkıf (Cürcânî)", "Tehâfütü'l-Felâsife (Gazzâlî & Hocazâde)", "Sahîh-i Buhârî Şerhleri (Fethu'l-Bârî & Umde)", "el-Keşşâf Hâşiyeleri"]
+  }
+};
+
+// 3 İDEAL OSMANLI MEDRESESİ SENARYOSU
+const OTTOMAN_SCENARIOS = {
+  fikh_usul: {
+    id: "fikh_usul",
+    name: "Fıkıh ve Usûlü Ağırlıklı Kadim Osmanlı Medresesi Senaryosu",
+    shortTitle: "Fıkıh & Usûl-i Fıkıh Ekolü",
+    badge: "⚖️ Fıkıh & Usûl",
+    focusBranch: "Fıkıh ve Usul",
+    maxBranchRatio: 0.60, // Tevâzün İlkesi: Maks %60
+    reputationBonus: 10,
+    impactBonus: { fıkıh: 15, arapcaDil: 8, kelamFelsefe: 4 },
+    description: "Kudûrî, Mültekâ, Dürer, Menâr, Şerhu'l-Vikâye, Tavzîh, Telvîh ve el-Hidâye omurgasında, fetva ve kaza kabiliyeti kazandıran klasik medrese nizâmı.",
+    defaultAssignments: {
+      // Sınıflara göre ders eşleştirmeleri: courseId -> { classYear, semester, weeklyHours }
+      1: { classYear: 0, semester: "guz", weeklyHours: 6 },    // Emsile Binâ Maksud
+      2: { classYear: 0, semester: "guz", weeklyHours: 6 },    // Avâmil
+      4: { classYear: 0, semester: "guz", weeklyHours: 4 },    // Kudûrî
+      57: { classYear: 0, semester: "guz", weeklyHours: 2 },   // Kırk Hadis & Beykūniyye
+      6: { classYear: 0, semester: "bahar", weeklyHours: 6 },  // İzhâr
+      9: { classYear: 0, semester: "bahar", weeklyHours: 3 },  // Îsâgûcî
+      13: { classYear: 1, semester: "guz", weeklyHours: 3 },   // Celâleyn
+      11: { classYear: 1, semester: "guz", weeklyHours: 4 },   // Kâfiye
+      14: { classYear: 1, semester: "guz", weeklyHours: 4 },   // İhtiyâr
+      16: { classYear: 1, semester: "bahar", weeklyHours: 4 }, // Molla Câmî
+      51: { classYear: 1, semester: "bahar", weeklyHours: 4 }, // Mültekâ & Dürer
+      19: { classYear: 1, semester: "bahar", weeklyHours: 3 }, // Şerhu'l-Akâid
+      24: { classYear: 2, semester: "guz", weeklyHours: 3 },   // Şemsiyye
+      22: { classYear: 2, semester: "guz", weeklyHours: 4 },   // Menârü'l-Envâr
+      52: { classYear: 2, semester: "guz", weeklyHours: 4 },   // Şerhu'l-Vikāye
+      21: { classYear: 2, semester: "guz", weeklyHours: 4 },   // el-Hidâye I
+      26: { classYear: 2, semester: "bahar", weeklyHours: 4 }, // el-Hidâye II
+      23: { classYear: 2, semester: "guz", weeklyHours: 3 },   // Kadı Beyzâvî
+      31: { classYear: 3, semester: "guz", weeklyHours: 4 },   // Mir'âtü'l-Usûl
+      32: { classYear: 3, semester: "guz", weeklyHours: 3 },   // Muhtasaru'l-Me'ânî
+      35: { classYear: 3, semester: "guz", weeklyHours: 3 },   // Mecelle & Dürer
+      36: { classYear: 3, semester: "bahar", weeklyHours: 4 }, // et-Tavzîh & Telvîh
+      41: { classYear: 4, semester: "guz", weeklyHours: 4 },   // el-Hidâye İleri Muhakeme
+      46: { classYear: 4, semester: "guz", weeklyHours: 4 },   // Fetva Usulü & Nevazil
+      58: { classYear: 4, semester: "yillik", weeklyHours: 2 } // 4. Sınıf Alan Okuma
+    }
+  },
+  kelam_felsefe: {
+    id: "kelam_felsefe",
+    name: "Kelam, Mantık ve Hikmet Ağırlıklı Sahn-ı Semân Senaryosu",
+    shortTitle: "Kelam & Akli İlimler Ekolü",
+    badge: "🧠 Kelam & Mantık",
+    focusBranch: "Kelam ve Mantık",
+    maxBranchRatio: 0.60,
+    reputationBonus: 12,
+    impactBonus: { kelamFelsefe: 18, arapcaDil: 6, sosyalBilimler: 6 },
+    description: "Îsâgûcî, Şemsiyye, Şerhu'l-Akâid, Hidâyetü'l-Hikme, Hâşiye-i Tecrîd, Gazzâlî Tehâfütü ve Şerhu'l-Mevâkıf ile felsefi kelam derinliği kazandıran Sahn-ı Semân müfredatı.",
+    defaultAssignments: {
+      1: { classYear: 0, semester: "guz", weeklyHours: 6 },    // Emsile Binâ Maksud
+      2: { classYear: 0, semester: "guz", weeklyHours: 6 },    // Avâmil
+      9: { classYear: 0, semester: "bahar", weeklyHours: 4 },  // Îsâgûcî Mantık
+      6: { classYear: 0, semester: "bahar", weeklyHours: 6 },  // İzhâr
+      4: { classYear: 0, semester: "guz", weeklyHours: 3 },    // Kudûrî
+      11: { classYear: 1, semester: "guz", weeklyHours: 4 },   // Kâfiye
+      15: { classYear: 1, semester: "guz", weeklyHours: 3 },   // Klasik Felsefeye Giriş (İşârât)
+      19: { classYear: 1, semester: "bahar", weeklyHours: 4 }, // Şerhu'l-Akâid (Teftâzânî)
+      16: { classYear: 1, semester: "bahar", weeklyHours: 4 }, // Molla Câmî
+      24: { classYear: 2, semester: "guz", weeklyHours: 4 },   // eş-Şemsiyye (Mantık)
+      22: { classYear: 2, semester: "guz", weeklyHours: 3 },   // Menârü'l-Envâr
+      54: { classYear: 2, semester: "bahar", weeklyHours: 3 }, // Hidâyetü'l-Hikme & Kadı Mîr
+      53: { classYear: 2, semester: "bahar", weeklyHours: 4 }, // Hâşiye-i Tecrîd (Cürcânî)
+      29: { classYear: 2, semester: "bahar", weeklyHours: 4 }, // Şerhu'l-Mevâkıf I
+      32: { classYear: 3, semester: "guz", weeklyHours: 3 },   // Muhtasaru'l-Me'ânî
+      34: { classYear: 3, semester: "guz", weeklyHours: 4 },   // Tehâfüt Münazaraları
+      23: { classYear: 3, semester: "guz", weeklyHours: 3 },   // Kadı Beyzâvî
+      36: { classYear: 3, semester: "bahar", weeklyHours: 4 }, // Tavzîh & Telvîh
+      44: { classYear: 4, semester: "guz", weeklyHours: 4 },   // İleri Felsefi Kelam
+      47: { classYear: 4, semester: "bahar", weeklyHours: 4 }, // Çağdaş İtikat Problemleri
+      58: { classYear: 4, semester: "yillik", weeklyHours: 2 } // 4. Sınıf Alan Okuma
+    }
+  },
+  sosyal_medeniyet: {
+    id: "sosyal_medeniyet",
+    name: "Sosyal Bilimler ve Medeniyet Düşüncesi Ağırlıklı İleri Tedrisat Senaryosu",
+    shortTitle: "Sosyal Bilimler & Medeniyet Ekolü",
+    badge: "🌍 Sosyal Bilimler",
+    focusBranch: "Sosyal Bilimler",
+    maxBranchRatio: 0.60,
+    reputationBonus: 9,
+    impactBonus: { sosyalBilimler: 16, arapcaDil: 6, kelamFelsefe: 6 },
+    description: "Kadim alet ilimleri zemininde İbn Haldun Umranı, İslam İktisat Doktrini, Siyaset Felsefesi, Kurumlar Tarihi ve Çağdaş Sosyal Teorileri mezceden model.",
+    defaultAssignments: {
+      1: { classYear: 0, semester: "guz", weeklyHours: 6 },    // Emsile Binâ Maksud
+      2: { classYear: 0, semester: "guz", weeklyHours: 6 },    // Avâmil
+      3: { classYear: 0, semester: "guz", weeklyHours: 4 },    // Fasih Modern Arapça I
+      6: { classYear: 0, semester: "bahar", weeklyHours: 6 },  // İzhâr
+      9: { classYear: 0, semester: "bahar", weeklyHours: 3 },  // Îsâgûcî
+      7: { classYear: 0, semester: "bahar", weeklyHours: 4 },  // Modern Arapça II
+      11: { classYear: 1, semester: "guz", weeklyHours: 3 },   // Kâfiye
+      14: { classYear: 1, semester: "guz", weeklyHours: 3 },   // İhtiyâr (Muamelat)
+      20: { classYear: 1, semester: "bahar", weeklyHours: 4 }, // İbn Haldun Mukaddimesi
+      17: { classYear: 1, semester: "bahar", weeklyHours: 3 }, // Basın ve Makale Arapçası
+      25: { classYear: 2, semester: "guz", weeklyHours: 4 },   // İslam Medeniyeti & Kurumlar Tarihi
+      22: { classYear: 2, semester: "guz", weeklyHours: 3 },   // Menârü'l-Envâr
+      26: { classYear: 2, semester: "bahar", weeklyHours: 3 }, // Fıkıh Büyû & Katılım Finansı
+      30: { classYear: 2, semester: "bahar", weeklyHours: 4 }, // Çağdaş Sosyal Teori
+      35: { classYear: 3, semester: "guz", weeklyHours: 3 },   // Mecelle & Hukuk Felsefesi
+      39: { classYear: 3, semester: "bahar", weeklyHours: 4 }, // İslam Siyaset Nazariyatı (Mâverdî)
+      43: { classYear: 4, semester: "guz", weeklyHours: 4 },   // İslam İktisat Doktrini
+      49: { classYear: 4, semester: "bahar", weeklyHours: 4 }, // Post-Kolonyalizm & Şarkiyatçılık
+      58: { classYear: 4, semester: "yillik", weeklyHours: 2 } // 4. Sınıf Alan Okuma
+    }
+  }
+};
 const CURRICULUM_MISSION_PACKAGES = {
   fikih_agirlikli: {
     id: "fikih_agirlikli",
@@ -988,5 +1284,5 @@ const CURRICULUM_MISSION_PACKAGES = {
 };
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { COURSES_DATA, CURRICULUM_MISSION_PACKAGES };
+  module.exports = { COURSES_DATA, CURRICULUM_MISSION_PACKAGES, OTTOMAN_HIERARCHY_LEVELS, OTTOMAN_SCENARIOS };
 }

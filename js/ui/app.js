@@ -6,11 +6,18 @@ const game = new DarulIlimGame();
 // Aktif Sekme ve Alt Sekme Durumları
 // Sekmeler: students, curriculum (Seminerler), scholars, staff, accounting, dorm (Binalar & Yurt), donors, peers, stats, graduates
 let currentTab = "students";
-let seminarSubTab = "assigned"; // "assigned" (Atanan Seminerler) | "assignments" (Sınıf & Hoca Eşleştirme Masası) | "profiles" (Ders Profilleri & Eserler)
+let seminarSubTab = "assigned"; // "assigned" (Atanan Seminerler) | "assignments" (Sınıf & Hoca Eşleştirme Masası) | "selection" (Seminer Seçimi & Eserler) | "profiles" (Ders Profilleri)
 let seminarBranchFilter = "all";   // "all", "Klasik Arapça", "Modern Arapça", "Fıkıh ve Usul", "Hadis ve Tefsir", "Kelam ve Mantık", "Sosyal Bilimler", "Sanat ve Metodoloji"
 let seminarClassFilter = "all";    // "all", "0", "1", "2", "3", "4"
 let seminarSemesterFilter = "all"; // "all", "guz", "bahar", "yillik"
 let currentInterviewCandidateIndex = 0;
+
+// Takvim Sınıf Filtresi ve Talebe Dosyası Sekmesi
+let selectedCalendarGrade = "all"; // "all", "0", "1", "2", "3", "4"
+let studentDetailActiveTab = "identity"; // "identity", "grades", "character", "discipline", "reports"
+let activeDetailStudentId = null;
+let selectionCourseSearch = "";
+let selectionBranchFilter = "all";
 
 // Filtre Değişkenleri
 let studentFilterGano = "all"; // "all", "sub3", "sub25"
@@ -91,9 +98,32 @@ function renderAll() {
   }
 }
 
-// Sekme Değiştir
+// Sol Açılır Menü (Sidebar Drawer) Kontrolleri
+function toggleSidebarMenu() {
+  const drawer = document.getElementById("sidebarDrawer");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  if (!drawer) return;
+  const isClosed = drawer.classList.contains("-translate-x-full");
+  if (isClosed) {
+    drawer.classList.remove("-translate-x-full");
+    if (backdrop) backdrop.classList.remove("hidden");
+  } else {
+    closeSidebarMenu();
+  }
+}
+
+function closeSidebarMenu() {
+  const drawer = document.getElementById("sidebarDrawer");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  if (drawer) drawer.classList.add("-translate-x-full");
+  if (backdrop) backdrop.classList.add("hidden");
+}
+
+// Sekme Değiştir (Hem üst sekme çubuğunu hem de sol menüyü günceller)
 function switchTab(tabName) {
   currentTab = tabName;
+
+  // Üst Sekmeler
   document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.classList.remove("border-emerald-700", "text-emerald-800", "font-bold", "bg-emerald-50");
     btn.classList.add("border-transparent", "text-slate-600");
@@ -103,6 +133,17 @@ function switchTab(tabName) {
   if (activeBtn) {
     activeBtn.classList.remove("border-transparent", "text-slate-600");
     activeBtn.classList.add("border-emerald-700", "text-emerald-800", "font-bold", "bg-emerald-50");
+  }
+
+  // Sol Açılır Menü Butonları
+  document.querySelectorAll("[id^='sidebarBtn_']").forEach(btn => {
+    btn.classList.remove("bg-emerald-100", "text-emerald-950", "font-bold");
+    btn.classList.add("text-slate-700");
+  });
+  const sideBtn = document.getElementById(`sidebarBtn_${tabName}`);
+  if (sideBtn) {
+    sideBtn.classList.add("bg-emerald-100", "text-emerald-950", "font-bold");
+    sideBtn.classList.remove("text-slate-700");
   }
 
   renderAll();
@@ -124,10 +165,21 @@ function renderHeader() {
   document.getElementById("headerReputation").innerText = `${s.reputation} / 100`;
   document.getElementById("headerReputationGain").innerText = `(Bu Yıl: +${s.reputationGainedThisYear})`;
 
+  // Uhuvvet & Sosyallik Düzeyi
+  const cohesion = s.socialCohesion || 55;
+  const cohesionEl = document.getElementById("headerSocialCohesion");
+  if (cohesionEl) cohesionEl.innerText = `🤝 %${cohesion}`;
+  const sideCohesion = document.getElementById("sidebarSocialCohesion");
+  if (sideCohesion) sideCohesion.innerText = `🤝 %${cohesion}`;
+  const sideCohesionBar = document.getElementById("sidebarSocialCohesionBar");
+  if (sideCohesionBar) sideCohesionBar.style.width = `${cohesion}%`;
+
   // Aktif Talebe / Yıllık Kontenjan
   const activeCount = s.students.filter(st => st.status === "active").length;
   const quota = game.getAnnualQuota();
   document.getElementById("headerStudentCount").innerText = `${activeCount} / ${quota} Talebe`;
+  const sideBadgeSt = document.getElementById("sidebarBadge_students");
+  if (sideBadgeSt) sideBadgeSt.innerText = activeCount;
 
   // Aylık Burs
   document.getElementById("headerStipend").innerText = `${s.currentYearStipend.toLocaleString('tr-TR')} ₺ / ay`;
@@ -174,7 +226,17 @@ function renderCalendar() {
     modeLabel.innerText = isStudentMode ? "[Öğrenci Tedrisat & Tatil Takvimi]" : "[İdare Takvimi]";
   }
 
-  monthTitle.innerText = `${MONTH_NAMES[normalizedIndex]} Ayı ${isStudentMode ? 'Tedrisat ve Tatil Takvimi' : 'İdari Takvimi'} ${offset !== 0 ? `(${offset > 0 ? '+' : ''}${offset} Ay İnceleme)` : ''}`;
+  const gradeNames = {
+    "all": "Tüm Sınıflar",
+    "0": "Hazırlık Sınıfı",
+    "1": "1. Sınıf",
+    "2": "2. Sınıf",
+    "3": "3. Sınıf",
+    "4": "4. Sınıf (İhtisas)"
+  };
+  const gradeLabel = gradeNames[selectedCalendarGrade] || "Genel";
+
+  monthTitle.innerText = `${MONTH_NAMES[normalizedIndex]} Ayı ${isStudentMode ? 'Tedrisat Takvimi' : 'İdare Takvimi'} [${gradeLabel}] ${offset !== 0 ? `(${offset > 0 ? '+' : ''}${offset} Ay)` : ''}`;
 
   let html = "";
   days.forEach(d => {
@@ -195,8 +257,16 @@ function renderCalendar() {
       dayBg = "bg-blue-50/60 border-blue-200 text-blue-900 font-medium";
     }
 
+    // Bu güne planlanmış ve seçili sınıfa yönelik konferanslar
+    const dayConfs = (game.state.scheduledConferences || []).filter(c => {
+      if (c.monthIndex !== normalizedIndex || c.day !== d.day) return false;
+      if (selectedCalendarGrade === "all") return true;
+      return c.targetGrades.includes("all") || c.targetGrades.includes(parseInt(selectedCalendarGrade)) || c.targetGrades.includes(String(selectedCalendarGrade));
+    });
+
     let dotColor = "";
     if (d.isCurrent) dotColor = "bg-white";
+    else if (dayConfs.length > 0) dotColor = "bg-purple-600";
     else if (d.event) {
       dotColor = d.event.type === "orientation" ? "bg-emerald-600" : (d.event.type === "holiday" ? "bg-sky-500" : "bg-amber-500");
     } else if (d.isAppointmentDay) {
@@ -204,27 +274,110 @@ function renderCalendar() {
     }
 
     html += `
-      <div onclick="handleCalendarDayClick(${d.day}, ${offset}, '${d.event ? d.event.type : ''}')" class="p-1.5 min-h-[66px] rounded-lg border ${dayBg} cursor-pointer hover:shadow-md transition text-xs flex flex-col justify-between relative group">
+      <div onclick="handleCalendarDayClick(${d.day}, ${offset}, '${d.event ? d.event.type : ''}')" class="p-1.5 min-h-[68px] rounded-lg border ${dayBg} cursor-pointer hover:shadow-md transition text-xs flex flex-col justify-between relative group">
         <div class="flex justify-between items-center">
           <span class="font-semibold">${d.day}</span>
           ${dotColor ? `<span class="w-2 h-2 rounded-full ${dotColor}"></span>` : ''}
         </div>
-        ${d.event ? `
-          <div class="truncate text-[10px] mt-1 leading-tight ${d.isCurrent ? 'text-white' : (d.event.type === 'orientation' ? 'text-emerald-800 font-bold' : 'text-amber-800 font-semibold')}" title="${d.event.title}">
-            ${d.event.title}
-          </div>
-        ` : (d.isAppointmentDay ? `
-          <div class="truncate text-[9px] mt-1 leading-tight text-blue-700 font-medium">
-            🤝 Talebe Hasbihali
-          </div>
-        ` : '')}
+
+        <div class="space-y-0.5 mt-0.5">
+          ${dayConfs.map(conf => `
+            <div class="truncate text-[9px] px-1 py-0.5 rounded bg-purple-100 text-purple-900 font-bold border border-purple-200 flex items-center gap-1" title="Konferans: ${conf.speaker} - '${conf.title}' (${conf.location})">
+              <span>🎙️</span>
+              <span class="truncate">${conf.speaker.split(' ').slice(-1)[0]}: ${conf.title}</span>
+            </div>
+          `).join('')}
+
+          ${d.event ? `
+            <div class="truncate text-[10px] leading-tight ${d.isCurrent ? 'text-white' : (d.event.type === 'orientation' ? 'text-emerald-800 font-bold' : 'text-amber-800 font-semibold')}" title="${d.event.title}">
+              ${d.event.title}
+            </div>
+          ` : (d.isAppointmentDay ? `
+            <div class="truncate text-[9px] leading-tight text-blue-700 font-medium">
+              🤝 Talebe Hasbihali
+            </div>
+          ` : '')}
+        </div>
+
         <div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-20 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg whitespace-nowrap pointer-events-none">
-          ${d.day} ${d.monthName}: ${d.event ? d.event.title : (d.isAppointmentDay ? '1-e-1 Talebe Görüşme Günü' : 'Tedrisat Günü')} ${offset === 0 ? '(Güne İlerle / Tıkla)' : ''}
+          ${d.day} ${d.monthName}: ${dayConfs.length > 0 ? `🎙️ ${dayConfs[0].speaker}` : (d.event ? d.event.title : (d.isAppointmentDay ? '1-e-1 Talebe Görüşme Günü' : 'Tedrisat Günü'))} ${offset === 0 ? '(Güne İlerle / Tıkla)' : ''}
         </div>
       </div>
     `;
   });
   calContainer.innerHTML = html;
+}
+
+function handleCalendarGradeChange(grade) {
+  selectedCalendarGrade = grade;
+  renderCalendar();
+}
+
+// Konferans Planlama Modalı Fonksiyonları
+function openAddConferenceModal() {
+  const modal = document.getElementById("addConferenceModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  document.getElementById("confDay").value = game.state.currentDay;
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function closeAddConferenceModal() {
+  const modal = document.getElementById("addConferenceModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function toggleConfAllGrades(checked) {
+  document.querySelectorAll(".conf-grade-cb").forEach(cb => {
+    cb.checked = checked;
+  });
+}
+
+function saveScheduledConference() {
+  const speaker = document.getElementById("confSpeaker").value.trim();
+  const title = document.getElementById("confTitle").value.trim();
+  const day = parseInt(document.getElementById("confDay").value) || 15;
+  const location = document.getElementById("confLocation").value;
+  const cost = parseInt(document.getElementById("confCost").value) || 12000;
+
+  if (!speaker || !title) {
+    alert("Lütfen konuşmacı adı ve konferans başlığını giriniz.");
+    return;
+  }
+
+  const allChecked = document.getElementById("confGrade_all").checked;
+  let targetGrades = [];
+  if (allChecked) {
+    targetGrades = ["all"];
+  } else {
+    document.querySelectorAll(".conf-grade-cb").forEach(cb => {
+      if (cb.checked) {
+        const yr = parseInt(cb.id.replace("confGrade_", ""));
+        targetGrades.push(yr);
+      }
+    });
+    if (targetGrades.length === 0) targetGrades = ["all"];
+  }
+
+  const offset = game.state.viewingMonthOffset;
+  const targetMonthIndex = (game.state.currentMonthIndex + offset + 12) % 12;
+
+  game.scheduleConference({
+    speaker,
+    title,
+    day,
+    monthIndex: targetMonthIndex,
+    location,
+    targetGrades,
+    cost
+  });
+
+  closeAddConferenceModal();
+  renderCalendar();
+  renderHeader();
+  if (typeof showToastNotification === "function") {
+    showToastNotification(`🎙️ ${speaker} konferansı takvime kaydedildi.`, "success");
+  }
 }
 
 function handleCalPrevMonth() {
@@ -658,18 +811,21 @@ function renderStudentsTab() {
                             <td class="py-3 px-4">
                               <div class="font-bold text-slate-900">${st.fullName}</div>
                               <div class="flex items-center gap-1.5 mt-0.5">
-                                <span class="text-[10px] text-emerald-800 font-semibold">${st.primaryField.toUpperCase()}</span>
                                 ${(st.track === 'ihtisas' || st.track === 'ihtisas_ileri') ? `
-                                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-300">
-                                    🌟 İhtisas Programı
+                                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-300">
+                                    🌟 İhtisas
                                   </span>
                                 ` : `
-                                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
-                                    📘 Normal Tedrisat
+                                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                    Normal Tedrisat
                                   </span>
                                 `}
+                                ${(st.disciplineRecord && st.disciplineRecord.length > 0) ? `
+                                  <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-300" title="Disiplin Tutanağı Mevcut">
+                                    ⚠️ Tutanak (${st.disciplineRecord.length})
+                                  </span>
+                                ` : ''}
                               </div>
-                              ${st.weakness ? `<div class="text-[10px] text-red-600 truncate max-w-xs">⚠️ ${st.weakness}</div>` : ''}
                             </td>
                             <td class="py-3 px-4">
                               <div class="font-medium text-slate-800">${st.faculty}</div>
@@ -805,19 +961,23 @@ function renderCurriculumTab() {
             </p>
           </div>
 
-          <!-- Alt Sekme Seçici: Atanan Seminerler vs Sınıf & Hoca Eşleştirme Masası vs Ders Profilleri & Eserler Kütüphanesi -->
+          <!-- Alt Sekme Seçici: Atanan Seminerler vs Sınıf & Hoca Eşleştirme Masası vs Seminer Seçimi vs Ders Profilleri -->
           <div class="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200 text-xs">
-            <button onclick="seminarSubTab = 'assigned'; renderCurriculumTab();" class="px-3.5 py-1.5 rounded-lg font-bold transition ${seminarSubTab === 'assigned' ? 'bg-white text-emerald-800 shadow' : 'text-slate-600 hover:text-slate-900'}">
+            <button onclick="seminarSubTab = 'assigned'; renderCurriculumTab();" class="px-3 py-1.5 rounded-lg font-bold transition ${seminarSubTab === 'assigned' ? 'bg-white text-emerald-800 shadow' : 'text-slate-600 hover:text-slate-900'}">
               <i data-lucide="book-check" class="inline w-3.5 h-3.5 mr-1"></i>
               Atanan Seminerler
             </button>
-            <button onclick="seminarSubTab = 'assignments'; renderCurriculumTab();" class="px-3.5 py-1.5 rounded-lg font-bold transition ${seminarSubTab === 'assignments' ? 'bg-white text-emerald-800 shadow' : 'text-slate-600 hover:text-slate-900'}">
+            <button onclick="seminarSubTab = 'assignments'; renderCurriculumTab();" class="px-3 py-1.5 rounded-lg font-bold transition ${seminarSubTab === 'assignments' ? 'bg-white text-emerald-800 shadow' : 'text-slate-600 hover:text-slate-900'}">
               <i data-lucide="layout-grid" class="inline w-3.5 h-3.5 mr-1"></i>
-              Sınıf & Hoca Eşleştirme Masası
+              Sınıf & Hoca Masası
             </button>
-            <button onclick="seminarSubTab = 'profiles'; renderCurriculumTab();" class="px-3.5 py-1.5 rounded-lg font-bold transition ${seminarSubTab === 'profiles' ? 'bg-white text-emerald-800 shadow' : 'text-slate-600 hover:text-slate-900'}">
+            <button onclick="seminarSubTab = 'selection'; renderCurriculumTab();" class="px-3 py-1.5 rounded-lg font-bold transition ${seminarSubTab === 'selection' ? 'bg-white text-emerald-800 shadow' : 'text-slate-600 hover:text-slate-900'}">
+              <i data-lucide="plus-circle" class="inline w-3.5 h-3.5 mr-1"></i>
+              Seminer Seçimi
+            </button>
+            <button onclick="seminarSubTab = 'profiles'; renderCurriculumTab();" class="px-3 py-1.5 rounded-lg font-bold transition ${seminarSubTab === 'profiles' ? 'bg-white text-emerald-800 shadow' : 'text-slate-600 hover:text-slate-900'}">
               <i data-lucide="library" class="inline w-3.5 h-3.5 mr-1"></i>
-              Ders Profilleri & Eserler
+              Ders Profilleri
             </button>
           </div>
         </div>
@@ -881,7 +1041,7 @@ function renderCurriculumTab() {
           ${renderAssignedSeminarsGrid(allCourses)}
         </div>
       ` : (seminarSubTab === 'assignments' ? `
-        <!-- ==================== 1. ALT SEKME: SINIF & HOCA EŞLEŞTİRME MASASI ==================== -->
+        <!-- ==================== 2. ALT SEKME: SINIF & HOCA EŞLEŞTİRME MASASI ==================== -->
         <div class="space-y-4">
           <!-- Sınıf Yılı Sekmeleri ve Branş Filtresi -->
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-200 pb-3">
@@ -893,7 +1053,7 @@ function renderCurriculumTab() {
               `).join('')}
             </div>
 
-            <!-- Branş Filtresi (Klasik Arapça vs Modern Arapça Ayrımı Dahil) -->
+            <!-- Branş Filtresi -->
             <div class="flex items-center gap-2 text-xs">
               <span class="text-slate-500 font-semibold">Branş:</span>
               <select onchange="seminarBranchFilter = this.value; renderCurriculumTab();" class="px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-xs">
@@ -931,8 +1091,160 @@ function renderCurriculumTab() {
             </div>
           </div>
         </div>
+      ` : (seminarSubTab === 'selection' ? `
+        <!-- ==================== 3. ALT SEKME: SEMİNER SEÇİMİ & ESER HAVUZU ==================== -->
+        <div class="space-y-4">
+          <!-- Üst Eylem ve Bilgilendirme Kartı -->
+          <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm font-amiri flex items-center gap-2">
+                <i data-lucide="layers" class="text-emerald-700"></i>
+                Eser Havuzu & Serbest Ders Atama Masası
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Kullanıcı ders kodu ve metnini girerek havuza ders ekleyebilir veya Osmanlı medrese hiyerarşisindeki eserleri dilediği sınıfa atayabilir.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="openCustomCourseModal()" class="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                Yeni Ders & Metin Ekle
+              </button>
+              <button onclick="openIdealScenarioModal()" class="px-3.5 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition">
+                <i data-lucide="scroll" class="w-3.5 h-3.5"></i>
+                İdeal Osmanlı Senaryoları
+              </button>
+            </div>
+          </div>
+
+          <!-- Kadim Osmanlı Medresesi 4 Temel Kademe Eser Cetveli -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-2.5 text-xs">
+            <div class="p-3 rounded-xl border border-emerald-200 bg-emerald-50/60">
+              <span class="badge-ottoman-1 px-2 py-0.5 rounded text-[10px] font-bold">1: İbtidâ-i Hâric</span>
+              <p class="text-[11px] text-emerald-950 mt-1.5 leading-snug">Emsile, Binâ, Maksûd, Avâmil; Îsâgûcî; Kudûrî; Kırk Hadis; Celâleyn Tefsiri.</p>
+            </div>
+            <div class="p-3 rounded-xl border border-teal-200 bg-teal-50/60">
+              <span class="badge-ottoman-2 px-2 py-0.5 rounded text-[10px] font-bold">2: Hâric-Dâhil</span>
+              <p class="text-[11px] text-teal-950 mt-1.5 leading-snug">İzhâr, Kâfiye/Câmî; Şemsiyye; Mültekâ, Dürer; Şerhu'l-Akâid; Beykūniyye; Medârik.</p>
+            </div>
+            <div class="p-3 rounded-xl border border-blue-200 bg-blue-50/60">
+              <span class="badge-ottoman-3 px-2 py-0.5 rounded text-[10px] font-bold">3: Sahn-ı Semân</span>
+              <p class="text-[11px] text-blue-950 mt-1.5 leading-snug">Muhtasaru'l-Me'ânî; Şerhu'l-Vikāye, Menâr, Tavzîh; Tecrîd, Hidâye; Beyzâvî.</p>
+            </div>
+            <div class="p-3 rounded-xl border border-purple-200 bg-purple-50/60">
+              <span class="badge-ottoman-4 px-2 py-0.5 rounded text-[10px] font-bold">4: Süleymaniye</span>
+              <p class="text-[11px] text-purple-950 mt-1.5 leading-snug">el-Hidâye, Telvîh; Şerhu'l-Mevâkıf, Tehâfüt; Sahîh-i Buhârî şerhleri; Keşşâf.</p>
+            </div>
+          </div>
+
+          <!-- Tevâzün İlkesi Notu -->
+          <div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-center gap-2">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-amber-700 shrink-0"></i>
+            <span><strong>Tevâzün İlkesi:</strong> Herhangi bir sınıf düzeyinde tek bir ilim branşı haftalık toplam tedrisat yükünün <strong>%60'ını aşamaz</strong>. Aşarsa sistem atamayı engeller.</span>
+          </div>
+
+          <!-- Arama & Branş Filtreleme Çubuğu -->
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
+            <div class="flex items-center gap-2 text-xs">
+              <span class="text-slate-500 font-semibold">Branş:</span>
+              <select onchange="selectionBranchFilter = this.value; renderCurriculumTab();" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white">
+                <option value="all" ${selectionBranchFilter === 'all' ? 'selected' : ''}>Tüm Branşlar (${allCourses.length} Ders)</option>
+                <option value="Klasik Arapça" ${selectionBranchFilter === 'Klasik Arapça' ? 'selected' : ''}>Klasik Arapça</option>
+                <option value="Modern Arapça" ${selectionBranchFilter === 'Modern Arapça' ? 'selected' : ''}>Modern Arapça</option>
+                <option value="Fıkıh ve Usul" ${selectionBranchFilter === 'Fıkıh ve Usul' ? 'selected' : ''}>Fıkıh ve Usul</option>
+                <option value="Hadis ve Tefsir" ${selectionBranchFilter === 'Hadis ve Tefsir' ? 'selected' : ''}>Hadis ve Tefsir</option>
+                <option value="Kelam ve Mantık" ${selectionBranchFilter === 'Kelam ve Mantık' ? 'selected' : ''}>Kelam ve Mantık</option>
+                <option value="Sosyal Bilimler" ${selectionBranchFilter === 'Sosyal Bilimler' ? 'selected' : ''}>Sosyal Bilimler</option>
+                <option value="Sanat ve Metodoloji" ${selectionBranchFilter === 'Sanat ve Metodoloji' ? 'selected' : ''}>Sanat ve Metodoloji</option>
+              </select>
+            </div>
+
+            <input 
+              type="text" 
+              placeholder="Ders adı, kodu veya metin ara..." 
+              value="${selectionCourseSearch}" 
+              oninput="selectionCourseSearch = this.value; renderCurriculumTab();"
+              class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs w-full sm:w-64 focus:outline-none"
+            >
+          </div>
+
+          <!-- Eser Havuzu Kartları -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            ${allCourses.filter(c => {
+              if (selectionBranchFilter !== "all" && c.branch !== selectionBranchFilter) return false;
+              if (selectionCourseSearch) {
+                const q = selectionCourseSearch.toLowerCase();
+                const m = (c.name && c.name.toLowerCase().includes(q)) ||
+                          (c.code && c.code.toLowerCase().includes(q)) ||
+                          (c.textbook && c.textbook.toLowerCase().includes(q)) ||
+                          (c.arabicName && c.arabicName.toLowerCase().includes(q));
+                if (!m) return false;
+              }
+              return true;
+            }).map(c => {
+              let ottomanBadge = "";
+              if (c.ottomanLevel === 1) ottomanBadge = `<span class="badge-ottoman-1 px-1.5 py-0.5 rounded text-[9px] font-bold">1: İbtidâ-i Hâric</span>`;
+              else if (c.ottomanLevel === 2) ottomanBadge = `<span class="badge-ottoman-2 px-1.5 py-0.5 rounded text-[9px] font-bold">2: Hâric-Dâhil</span>`;
+              else if (c.ottomanLevel === 3) ottomanBadge = `<span class="badge-ottoman-3 px-1.5 py-0.5 rounded text-[9px] font-bold">3: Sahn-ı Semân</span>`;
+              else if (c.ottomanLevel === 4) ottomanBadge = `<span class="badge-ottoman-4 px-1.5 py-0.5 rounded text-[9px] font-bold">4: Süleymaniye</span>`;
+              else ottomanBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-700 border">Özel Seminer</span>`;
+
+              return `
+                <div class="p-3.5 bg-white rounded-xl border border-slate-200 text-xs flex flex-col justify-between hover:shadow-sm transition">
+                  <div>
+                    <div class="flex justify-between items-start gap-1">
+                      <span class="text-[10px] font-mono font-bold text-slate-400">${c.code}</span>
+                      <div class="flex items-center gap-1">
+                        ${ottomanBadge}
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${getBranchBadgeColor(c.branch)}">${c.branch}</span>
+                      </div>
+                    </div>
+
+                    <h4 class="font-bold text-slate-900 text-sm mt-1.5">${c.name}</h4>
+                    <div class="text-[11px] text-emerald-800 font-amiri italic">${c.arabicName || ''}</div>
+                    <div class="mt-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                      <span class="text-[10px] text-slate-400 uppercase font-bold block">Okutulan Metin:</span>
+                      <strong class="text-slate-800 text-[11px]">${c.textbook || c.name}</strong>
+                    </div>
+
+                    <div class="mt-2 text-[10px] text-slate-500">
+                      Mevcut Atama: <strong class="text-slate-800">${c.classYear === 0 ? 'Hazırlık' : c.classYear + '. Sınıf'}</strong> • ${c.semester === 'guz' ? 'Güz' : 'Bahar'} • <strong>${c.weeklyHours || 4} saat/hafta</strong>
+                    </div>
+                  </div>
+
+                  <!-- Müfredata Atama / Güncelleme Formu -->
+                  <div class="mt-3 pt-2.5 border-t border-slate-100 space-y-2">
+                    <div class="flex items-center gap-1.5">
+                      <select id="sel_cl_${c.id}" class="text-[10px] p-1 border border-slate-300 rounded bg-white flex-1">
+                        <option value="0" ${c.classYear === 0 ? 'selected' : ''}>Hazırlık</option>
+                        <option value="1" ${c.classYear === 1 ? 'selected' : ''}>1. Sınıf</option>
+                        <option value="2" ${c.classYear === 2 ? 'selected' : ''}>2. Sınıf</option>
+                        <option value="3" ${c.classYear === 3 ? 'selected' : ''}>3. Sınıf</option>
+                        <option value="4" ${c.classYear === 4 ? 'selected' : ''}>4. Sınıf</option>
+                      </select>
+                      <select id="sel_sm_${c.id}" class="text-[10px] p-1 border border-slate-300 rounded bg-white">
+                        <option value="guz" ${c.semester === 'guz' ? 'selected' : ''}>Güz</option>
+                        <option value="bahar" ${c.semester === 'bahar' ? 'selected' : ''}>Bahar</option>
+                      </select>
+                      <select id="sel_hr_${c.id}" class="text-[10px] p-1 border border-slate-300 rounded bg-white">
+                        <option value="2" ${c.weeklyHours === 2 ? 'selected' : ''}>2 Saat</option>
+                        <option value="3" ${c.weeklyHours === 3 ? 'selected' : ''}>3 Saat</option>
+                        <option value="4" ${(c.weeklyHours === 4 || !c.weeklyHours) ? 'selected' : ''}>4 Saat</option>
+                        <option value="6" ${c.weeklyHours === 6 ? 'selected' : ''}>6 Saat</option>
+                      </select>
+                      <button onclick="updateCourseAssignmentFromSelection('${c.id}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-[10px] font-bold transition whitespace-nowrap shadow-sm">
+                        Ata
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
       ` : `
-        <!-- ==================== 2. ALT SEKME: DERS PROFİLLERİ & ESERLER KÜTÜPHANESİ ==================== -->
+        <!-- ==================== 4. ALT SEKME: DERS PROFİLLERİ & ESERLER KÜTÜPHANESİ ==================== -->
         <div class="space-y-6">
           <div class="p-4 bg-amber-50/60 rounded-2xl border border-amber-200 text-xs text-amber-900 leading-relaxed">
             <i data-lucide="book" class="inline w-4 h-4 mr-1 text-amber-700"></i>
@@ -986,7 +1298,7 @@ function renderCurriculumTab() {
             `).join('')}
           </div>
         </div>
-      `)}
+      `))}
     </div>
   `;
 
@@ -1102,6 +1414,124 @@ function handleUnassignCourse(courseId) {
   renderAll();
 }
 
+// ==================== SEMİNER SEÇİMİ, ESER HAVUZU & İDEAL SENARYO İŞLEMLERİ ====================
+function openCustomCourseModal() {
+  const modal = document.getElementById("customCourseModal");
+  if (modal) modal.classList.remove("hidden");
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function closeCustomCourseModal() {
+  const modal = document.getElementById("customCourseModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function saveCustomCourseToPool() {
+  const code = document.getElementById("newCourseCode").value.trim();
+  const name = document.getElementById("newCourseName").value.trim();
+  const textbook = document.getElementById("newCourseTextbook").value.trim();
+  const branch = document.getElementById("newCourseBranch").value;
+  const level = parseInt(document.getElementById("newCourseLevel").value) || 1;
+  const hours = parseInt(document.getElementById("newCourseHours").value) || 3;
+  const classYear = parseInt(document.getElementById("newCourseClass").value);
+
+  if (!code || !name) {
+    alert("Lütfen ders kodunu ve ders adını eksiksiz giriniz.");
+    return;
+  }
+
+  const res = game.addCustomCourseToPool({
+    code,
+    name,
+    textbook: textbook || name,
+    branch,
+    ottomanLevel: level,
+    weeklyHours: hours,
+    classYear: classYear >= 0 ? classYear : 1
+  });
+
+  if (!res.success) {
+    alert(res.message);
+    return;
+  }
+
+  closeCustomCourseModal();
+  renderCurriculumTab();
+  if (typeof showToastNotification === "function") {
+    showToastNotification(res.message, "success");
+  } else {
+    alert(res.message);
+  }
+}
+
+function openIdealScenarioModal() {
+  const modal = document.getElementById("idealScenarioModal");
+  if (modal) modal.classList.remove("hidden");
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function closeIdealScenarioModal() {
+  const modal = document.getElementById("idealScenarioModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function handleApplyOttomanScenario(scenarioKey) {
+  const res = game.applyOttomanScenario(scenarioKey);
+  alert(res.message);
+  closeIdealScenarioModal();
+  renderAll();
+}
+
+function updateCourseAssignmentFromSelection(courseId) {
+  const clSel = document.getElementById(`sel_cl_${courseId}`);
+  const smSel = document.getElementById(`sel_sm_${courseId}`);
+  const hrSel = document.getElementById(`sel_hr_${courseId}`);
+  if (!clSel || !smSel || !hrSel) return;
+
+  const targetClass = parseInt(clSel.value);
+  const targetSemester = smSel.value;
+  const targetHours = parseInt(hrSel.value);
+
+  const allCourses = game.getAllCourses();
+  const course = allCourses.find(c => c.id === courseId || String(c.id) === String(courseId));
+  if (!course) {
+    alert("Ders bulunamadı.");
+    return;
+  }
+
+  // Tevâzün İlkesi (60% Kuralı) Kontrolü
+  const validation = game.validateCurriculumBranchCap(targetClass, course.id, course.branch, targetHours);
+  if (!validation.valid) {
+    alert(`⚠️ Tevâzün İlkesi İhlali!\n${validation.message}`);
+    return;
+  }
+
+  // Müfredata güncelle
+  if (!game.state.customCurriculum) game.state.customCurriculum = [];
+  const existingIdx = game.state.customCurriculum.findIndex(c => c.id === course.id || String(c.id) === String(course.id));
+  const updatedCourse = {
+    ...course,
+    classYear: targetClass,
+    semester: targetSemester,
+    weeklyHours: targetHours,
+    semesterLabel: targetSemester === "guz" ? "Güz" : "Bahar"
+  };
+
+  if (existingIdx >= 0) {
+    game.state.customCurriculum[existingIdx] = updatedCourse;
+  } else {
+    game.state.customCurriculum.push(updatedCourse);
+  }
+
+  game.saveToStorage();
+  renderCurriculumTab();
+  if (typeof showToastNotification === "function") {
+    showToastNotification(`📚 ${course.name} (${targetHours} saat/hafta) ${targetClass === 0 ? 'Hazırlık' : targetClass + '. Sınıf'} müfredatına atandı.`, "success");
+  } else {
+    alert(`Ders başarıyla atandı.`);
+  }
+}
+
 function getBranchBadgeColor(branch) {
   const colors = {
     "Klasik Arapça": "bg-emerald-100 text-emerald-800 border border-emerald-300",
@@ -1122,14 +1552,18 @@ function renderScholarsTab() {
   const isFemale = s.genderMode === "female";
 
   const scholarsPool = isFemale ? SCHOLARS_DATA_FEMALE : SCHOLARS_DATA_MALE;
+  let allMarketScholars = [...scholarsPool];
+  if (s.scholarsMarket && s.scholarsMarket.length > 0) {
+    allMarketScholars = [...s.scholarsMarket, ...allMarketScholars];
+  }
 
   const totalMonthlySalary = s.hiredScholars.reduce((acc, h) => acc + h.monthlySalary, 0);
   const sponsoredAmount = s.scholarBudget.sponsoredMonthlyAmount || 0;
   const netScholarCost = Math.max(0, totalMonthlySalary - sponsoredAmount);
 
   // Filtreleme
-  let filtered = scholarsPool.filter(sch => {
-    if (scholarFilterSpecialty !== "all" && sch.specialty !== scholarFilterSpecialty) return false;
+  let filtered = allMarketScholars.filter(sch => {
+    if (scholarFilterSpecialty !== "all" && sch.specialty !== scholarFilterSpecialty && sch.branch !== scholarFilterSpecialty) return false;
     if (sch.monthlySalary > scholarFilterMaxPrice) return false;
     return true;
   });
@@ -1194,8 +1628,8 @@ function renderScholarsTab() {
                   </div>
                 </div>
                 <div class="mt-3 pt-2 border-t border-slate-200 flex justify-between items-center text-[10px]">
-                  <span class="text-slate-400">Yetkinlik: ${h.expertiseScore}/100</span>
-                  <button onclick="handleFireScholar(${h.scholarId})" class="text-red-500 hover:text-red-700 font-semibold">
+                  <span class="text-slate-400">Yetkinlik: ${h.expertiseScore || 70}/100</span>
+                  <button onclick="handleFireScholar('${h.scholarId}')" class="text-red-500 hover:text-red-700 font-semibold">
                     Sözleşmeyi Feshet
                   </button>
                 </div>
@@ -1205,7 +1639,7 @@ function renderScholarsTab() {
         `}
       </div>
 
-      <!-- HOCA TRANSFER PAZARI (HER BRANŞTA 6 HOCA, %20 İNDİRİMLİ ÜCRETLER) -->
+      <!-- HOCA TRANSFER PAZARI -->
       <div class="ottoman-card p-5 rounded-2xl border bg-white shadow-sm space-y-4">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
@@ -1214,12 +1648,17 @@ function renderScholarsTab() {
               Müderris Transfer Piyasası & Serbest Kürsüler
             </h3>
             <p class="text-xs text-slate-500">
-              Klasik Arapça (6 Hoca), Modern Arapça (4 Hoca) ve diğer branşlarda 6'şar hoca. 3'ü başlangıçta açık, diğerleri itibar arttıkça açılır.
+              Klasik Arapça (6 Hoca), Modern Arapça (4 Hoca) ve diğer branşlarda hocalar. İtibar arttıkça yeni hocalar açılır.
             </p>
           </div>
 
-          <!-- Filtreler -->
+          <!-- Filtreler ve Hoca Ekle Butonu -->
           <div class="flex flex-wrap items-center gap-2 text-xs">
+            <button onclick="openAddScholarModal()" class="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition">
+              <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+              Yeni Hoca Davet Et / Pazara Ekle
+            </button>
+
             <select onchange="scholarFilterSpecialty = this.value; renderScholarsTab();" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white">
               <option value="all" ${scholarFilterSpecialty === 'all' ? 'selected' : ''}>Tüm Branşlar</option>
               <option value="Klasik Arapça" ${scholarFilterSpecialty === 'Klasik Arapça' ? 'selected' : ''}>Klasik Arapça</option>
@@ -1235,37 +1674,38 @@ function renderScholarsTab() {
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           ${filtered.map(sch => {
-            const isHired = s.hiredScholars.some(h => h.scholarId === sch.id);
-            const isLocked = s.reputation < sch.minReputationRequired;
+            const isHired = s.hiredScholars.some(h => String(h.scholarId) === String(sch.id));
+            const reqRep = sch.minReputationRequired !== undefined ? sch.minReputationRequired : (sch.minReputation || 20);
+            const isLocked = s.reputation < reqRep;
 
             return `
               <div class="p-4 rounded-xl border flex flex-col justify-between ${isHired ? 'bg-emerald-50/40 border-emerald-300' : (isLocked ? 'bg-slate-50 border-slate-200 opacity-75' : 'bg-white border-slate-200')}">
                 <div>
                   <div class="flex justify-between items-start">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${getBranchBadgeColor(sch.specialty)}">
-                      ${sch.specialty} ${sch.age ? `• ${sch.age} Yaş` : ''}
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${getBranchBadgeColor(sch.specialty || sch.branch)}">
+                      ${sch.specialty || sch.branch} ${sch.age ? `• ${sch.age} Yaş` : (sch.ageCategoryLabel ? `• ${sch.ageCategoryLabel.split(' ')[0]}` : '')}
                     </span>
                     <span class="font-bold text-slate-800 text-xs">${sch.monthlySalary.toLocaleString('tr-TR')} ₺/ay</span>
                   </div>
 
                   <h4 class="font-bold text-slate-900 text-sm mt-2">${sch.title} ${sch.name}</h4>
-                  <div class="text-[10px] text-slate-400">${sch.institution}</div>
+                  <div class="text-[10px] text-slate-400">${sch.institution || sch.proximityLabel || 'İstanbul İçi'}</div>
                   <p class="text-[11px] text-slate-500 mt-2 leading-relaxed">${sch.bio}</p>
                 </div>
 
                 <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
-                  <span class="text-[10px] text-slate-400">İlim Puanı: <strong>${sch.expertiseScore}</strong></span>
+                  <span class="text-[10px] text-slate-400">İlim Gücü: <strong>${sch.expertiseScore || sch.academicDepth || 75}</strong></span>
 
                   ${isHired ? `
                     <span class="px-3 py-1 bg-emerald-100 text-emerald-800 font-bold rounded-lg text-[10px]">
                       ✓ Kadroda
                     </span>
                   ` : (isLocked ? `
-                    <span class="px-2.5 py-1 bg-slate-200 text-slate-600 font-semibold rounded-lg text-[10px] flex items-center gap-1" title="Kurum itibarı en az ${sch.minReputationRequired} olmalı">
-                      <i data-lucide="lock" class="w-3 h-3"></i> İtibar ${sch.minReputationRequired}
+                    <span class="px-2.5 py-1 bg-slate-200 text-slate-600 font-semibold rounded-lg text-[10px] flex items-center gap-1" title="Kurum itibarı en az ${reqRep} olmalı">
+                      <i data-lucide="lock" class="w-3 h-3"></i> İtibar ${reqRep}
                     </span>
                   ` : `
-                    <button onclick="handleHireScholar(${sch.id})" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-lg text-[11px] shadow transition">
+                    <button onclick="handleHireScholar('${sch.id}')" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-lg text-[11px] shadow transition">
                       Kadroya Kat
                     </button>
                   `)}
@@ -1293,6 +1733,68 @@ function handleFireScholar(scholarId) {
   if (confirm("Bu hocamız ile yapılan sözleşmeyi feshetmek istediğinize emin misiniz?")) {
     game.terminateScholarContract(scholarId);
     renderAll();
+  }
+}
+
+// ==================== HOCA PAZARINA ÖZEL HOCA EKLEME KONTROLLERİ ====================
+function openAddScholarModal() {
+  const modal = document.getElementById("addScholarModal");
+  if (modal) modal.classList.remove("hidden");
+  previewScholarCalculations();
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function closeAddScholarModal() {
+  const modal = document.getElementById("addScholarModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function previewScholarCalculations() {
+  const ageCat = document.getElementById("schAge") ? document.getElementById("schAge").value : "olgun";
+  const exp = parseInt(document.getElementById("schExp") ? document.getElementById("schExp").value : 3) || 3;
+  const prox = parseInt(document.getElementById("schProximity") ? document.getElementById("schProximity").value : 2) || 2;
+
+  const ageBonus = ageCat === "pir" ? 12 : (ageCat === "duayen" ? 8 : (ageCat === "olgun" ? 4 : 0));
+  const minRep = Math.min(95, Math.max(20, 25 + (exp * 8) + (prox * 6) + ageBonus));
+
+  const baseSalary = 16000;
+  const expMult = [1.0, 1.4, 2.0, 2.8, 4.0][exp - 1] || 2.0;
+  const proxMult = [1.0, 1.15, 1.4, 2.0, 3.2][prox - 1] || 1.2;
+  const ageSalaryBonus = ageCat === "pir" ? 8000 : (ageCat === "duayen" ? 5000 : 0);
+  const monthlySalary = Math.round((baseSalary * expMult * proxMult) + ageSalaryBonus);
+
+  const repEl = document.getElementById("schCalcMinRep");
+  if (repEl) repEl.innerText = `${minRep} Puan`;
+  const salEl = document.getElementById("schCalcSalary");
+  if (salEl) salEl.innerText = `${monthlySalary.toLocaleString('tr-TR')} ₺ / ay`;
+}
+
+function saveCustomScholar() {
+  const name = document.getElementById("schName").value.trim();
+  const branch = document.getElementById("schBranch").value;
+  const ageCategory = document.getElementById("schAge").value;
+  const experienceLevel = parseInt(document.getElementById("schExp").value);
+  const proximityDifficulty = parseInt(document.getElementById("schProximity").value);
+
+  if (!name) {
+    alert("Lütfen hocanın adını ve unvanını giriniz.");
+    return;
+  }
+
+  const sch = game.addCustomScholarToMarket({
+    name,
+    branch,
+    ageCategory,
+    experienceLevel,
+    proximityDifficulty
+  });
+
+  closeAddScholarModal();
+  renderScholarsTab();
+  if (typeof showToastNotification === "function") {
+    showToastNotification(`🎖️ ${sch.title} ${sch.name} hoca pazarına eklendi.`, "success");
+  } else {
+    alert(`${sch.title} ${sch.name} hoca pazarına eklendi.`);
   }
 }
 
@@ -1687,6 +2189,82 @@ function renderDormTab() {
         </div>
       </div>
 
+      <!-- UHUWVET & SOSYALLİK DÜZEYİ KARTI (YURT MÜDÜRÜ İSTİŞARE MASASI ERİŞİMİ DAHİL) -->
+      <div class="ottoman-card p-4 rounded-2xl border bg-gradient-to-r from-teal-50 via-white to-emerald-50 border-teal-200">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🤝</span>
+              <h3 class="font-bold text-slate-900 text-sm font-amiri">Talebeler Arası Uhuvvet, Kaynaşma & Sosyallik Düzeyi</h3>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-900 border border-teal-300">
+                %${s.socialCohesion || 55}
+              </span>
+            </div>
+            <p class="text-xs text-slate-600">
+              Yurdun genişliği, ortak çay ocakları, kütüphane tahlilleri ve düzenlenen sosyal etkinliklerle artar. Yüksek uhuvvet, arızaları ve disiplin hadiselerini belirgin derecede azaltır.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 w-full md:w-auto">
+            <button onclick="openDormConsultationModal()" class="px-4 py-2.5 bg-gradient-to-r from-emerald-800 to-teal-900 hover:from-emerald-900 hover:to-teal-950 text-white rounded-xl text-xs font-bold shadow flex items-center gap-2 transition whitespace-nowrap">
+              <i data-lucide="messages-square" class="w-4 h-4 text-teal-300"></i>
+              🏛️ Yurt Müdürü İstişare & Büyük Tadilat Masası
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-3 w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+          <div class="bg-gradient-to-r from-teal-500 to-emerald-600 h-2.5 rounded-full transition-all duration-500" style="width: ${s.socialCohesion || 55}%"></div>
+        </div>
+      </div>
+
+      <!-- AYLIK YURT HADİSELERİ, ARIZALAR & DİSİPLİN RAPORU PANELİ -->
+      <div class="ottoman-card p-5 rounded-2xl border bg-white shadow-sm space-y-3">
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2 font-amiri">
+              <i data-lucide="wrench" class="text-amber-600"></i>
+              Yurt Hadiseleri, Arızalar ve Disiplin Raporu (Bu Ay)
+            </h3>
+            <p class="text-xs text-slate-500">
+              Kazan patlaması, sıhhi aciller ve yüz kızartıcı fiiller. Kural ihlalleri anında öğrencinin şahsi dosyasına işlenir.
+            </p>
+          </div>
+          <span class="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-lg border">
+            ${(s.monthlyDormIncidentsLog || []).length} Hadise Kaydedildi
+          </span>
+        </div>
+
+        ${(!s.monthlyDormIncidentsLog || s.monthlyDormIncidentsLog.length === 0) ? `
+          <div class="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed">
+            Bu ay henüz kayda değer bir yurt arızası veya disiplin hadisesi yaşanmadı. Yurdun sükûneti devam ediyor.
+          </div>
+        ` : `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+            ${s.monthlyDormIncidentsLog.map(inc => `
+              <div class="p-3 rounded-xl border text-xs space-y-1 ${inc.isDisciplinary ? 'bg-red-50/50 border-red-200' : 'bg-slate-50 border-slate-200'}">
+                <div class="flex justify-between items-start font-bold">
+                  <span class="${inc.isDisciplinary ? 'text-red-900' : 'text-slate-800'} flex items-center gap-1">
+                    <span>${inc.isDisciplinary ? '🚨' : '🔧'}</span>
+                    ${inc.title}
+                  </span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded font-mono ${inc.isDisciplinary ? 'bg-red-100 text-red-800' : 'bg-slate-200 text-slate-700'}">
+                    ${inc.isDisciplinary ? 'Disiplin' : 'Teknik/Sıhhi'}
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-600">${inc.desc}</p>
+                <div class="text-[10px] text-slate-500 flex justify-between items-center pt-1 border-t border-slate-100">
+                  <span>${inc.day} ${MONTH_NAMES[inc.monthIndex] || 'Bu Ay'}</span>
+                  <span class="font-semibold ${inc.handled ? 'text-emerald-700' : 'text-amber-700'}">
+                    ${inc.handled ? '✓ İdarece Müdahale Edildi' : '⏳ Takipte'}
+                  </span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      </div>
+
       <!-- YURT GRUP STRES ETKİNLİKLERİ (AYDA EN FAZLA 4 KEZ!) -->
       <div class="ottoman-card p-5 rounded-2xl border bg-white shadow-sm space-y-3">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -1915,6 +2493,113 @@ function handleUpgradeDorm(dormId) {
 
 function handleTriggerStressEvent(type) {
   const res = game.triggerDirectStressEvent(type);
+  alert(res.message);
+  renderAll();
+}
+
+// ==================== YURT MÜDÜRÜ İSTİŞARE VE BÜYÜK TADİLAT MODALI ====================
+function openDormConsultationModal() {
+  const modal = document.getElementById("dormConsultationModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+
+  const s = game.state;
+  const content = document.getElementById("dormConsultationContent");
+  if (!content) return;
+
+  const proposal = s.currentDormMaintenanceProposal;
+  const isFemale = s.genderMode === "female";
+  const mgr = s.dormManager || { name: (isFemale ? "Zehra Hanım" : "Süleyman Bey"), title: "Yurt Müdürü" };
+
+  content.innerHTML = `
+    <div class="space-y-4">
+      <div class="border-b border-slate-100 pb-3 flex justify-between items-start">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-teal-800">İdare & Yurt Güvenlik Heyeti</span>
+          <h3 class="text-base font-bold text-slate-900 font-amiri flex items-center gap-2">
+            <span>🏛️ Yurt Müdürü İstişare & Büyük Tadilat Masası</span>
+          </h3>
+        </div>
+        <button onclick="closeDormConsultationModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Yurt Müdürü Kartı & Performansı -->
+      <div class="p-4 bg-teal-50/60 rounded-2xl border border-teal-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs">
+        <div>
+          <span class="text-[10px] text-teal-800 font-bold uppercase block">Vazifeli İdareci:</span>
+          <strong class="text-sm text-slate-900 font-amiri">${mgr.name}</strong>
+          <div class="text-[11px] text-slate-600 mt-0.5">Yurt Nizamı, Talebe Teftişi ve Sıhhi İntizam Sorumlusu</div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="handleEvaluateDormManager('praise')" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow transition flex items-center gap-1">
+            <i data-lucide="award" class="w-3.5 h-3.5"></i>
+            Takdir Belgesi (+Moral)
+          </button>
+          <button onclick="handleEvaluateDormManager('warn')" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shadow transition flex items-center gap-1">
+            <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+            Uslûp Uyarısı / İhtar
+          </button>
+        </div>
+      </div>
+
+      <!-- Büyük Tadilat Talebi -->
+      <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-3 text-xs">
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700">Aylık İstişare & Yatırım Talebi:</span>
+            <h4 class="font-bold text-sm text-slate-900 mt-1">${proposal ? proposal.title : 'Kapsamlı Yurt İyileştirme Paketi'}</h4>
+          </div>
+          <span class="px-2.5 py-1 rounded-xl font-bold bg-amber-100 text-amber-900 border border-amber-300 text-xs">
+            Bütçe Talebi: ${(proposal ? proposal.cost : 45000).toLocaleString('tr-TR')} ₺
+          </span>
+        </div>
+
+        <p class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+          ${proposal ? proposal.desc : 'Yurdun sıcak su tesisatı, kütüphane etüt salonu yalıtımı ve ortak alan mobilyalarının yenilenmesi talebidir.'}
+        </p>
+
+        <div class="grid grid-cols-2 gap-2 text-[11px]">
+          <div class="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-900">
+            <strong>🤝 Uhuvvet & Sosyallik:</strong> +${proposal ? proposal.cohesionGain : 10} Puan Artar
+          </div>
+          <div class="p-2.5 bg-blue-50 rounded-lg border border-blue-200 text-blue-900">
+            <strong>🛡️ Arıza Riski:</strong> Gelecek 2 ay arıza ve olay ihtimali %50 düşer
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button onclick="closeDormConsultationModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs transition">
+            Daha Sonra
+          </button>
+          <button onclick="handleApproveDormProposal('${proposal ? proposal.id : ''}')" class="px-4 py-2 bg-gradient-to-r from-teal-700 to-emerald-800 hover:from-teal-800 hover:to-emerald-900 text-white rounded-xl font-bold text-xs shadow transition flex items-center gap-1.5">
+            <i data-lucide="check-check" class="w-4 h-4"></i>
+            Tadilat Bütçesini Onayla (${(proposal ? proposal.cost : 45000).toLocaleString('tr-TR')} ₺)
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function closeDormConsultationModal() {
+  const modal = document.getElementById("dormConsultationModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function handleApproveDormProposal(proposalId) {
+  const res = game.approveDormMaintenanceProposal(proposalId);
+  alert(res.message);
+  closeDormConsultationModal();
+  renderAll();
+}
+
+function handleEvaluateDormManager(type) {
+  const res = game.evaluateDormManager(type);
   alert(res.message);
   renderAll();
 }
@@ -2333,50 +3018,306 @@ function handleConfirmAppointment() {
   renderAll();
 }
 
-// Talebe Dosyası Modalı
+// ==================== TALEBE DOSYASI MODALI (5 KATEGORİLİ) ====================
 function showStudentDetailModal(studentId) {
+  activeDetailStudentId = studentId;
   const st = game.state.students.find(s => s.id === studentId);
   if (!st) return;
 
   const modal = document.getElementById("studentDetailModal");
+  if (!modal) return;
   modal.classList.remove("hidden");
 
+  renderStudentDetailContent(st);
+}
+
+function renderStudentDetailContent(st) {
   const content = document.getElementById("studentDetailContent");
+  if (!content) return;
+
+  const isIhtisas = st.track === "ihtisas" || st.track === "ihtisas_ileri";
+  const tabs = [
+    { key: "identity", label: "🏛️ Hüviyet", icon: "user" },
+    { key: "grades", label: "📖 Ders & İhtisas", icon: "graduation-cap" },
+    { key: "character", label: "👤 Karakter & Zaaf", icon: "heart" },
+    { key: "discipline", label: "⚖️ Yurt & Sicil", icon: "shield-alert" },
+    { key: "reports", label: "📊 Aylık Raporlar", icon: "clipboard-list" }
+  ];
+
+  let bodyHtml = "";
+
+  // 1. KATEGORİ: HÜVİYET & MÜLAKAT ARKA PLANI
+  if (studentDetailActiveTab === "identity") {
+    bodyHtml = `
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Adı Soyadı:</span>
+            <strong class="text-sm text-slate-900 font-amiri">${st.fullName}</strong>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Kayıtlı Fakülte:</span>
+            <strong class="text-emerald-900 font-semibold">${st.faculty}</strong>
+            <div class="text-[10px] text-slate-500">${st.university}</div>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Mezun Olduğu Lise:</span>
+            <span class="text-slate-800 font-medium">${st.highSchool || 'İstanbul Anadolu İHL'} (${st.city || 'İstanbul'})</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">YKS Başarısı:</span>
+            <span class="px-2 py-0.5 rounded font-bold ${st.yksArea === 'SÖZ' ? 'bg-amber-100 text-amber-900' : 'bg-blue-100 text-blue-900'}">
+              ${st.yksArea || 'SÖZ'}: #${(st.yksRank || 1500).toLocaleString('tr-TR')}
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 p-3 bg-emerald-50/60 rounded-2xl border border-emerald-200">
+          <div>
+            <span class="text-[10px] text-emerald-800 font-bold uppercase block">İlim İstidadı:</span>
+            <strong class="text-base text-emerald-900">${st.talent} / 100</strong>
+          </div>
+          <div>
+            <span class="text-[10px] text-emerald-800 font-bold uppercase block">Kayıt Yılı & Sınıf:</span>
+            <strong class="text-slate-800">${st.enrollmentYear}. Yıl • ${st.currentClassYear === 0 ? 'Hazırlık' : st.currentClassYear + '. Sınıf'}</strong>
+          </div>
+          <div>
+            <span class="text-[10px] text-emerald-800 font-bold uppercase block">Tedrisat Halkası:</span>
+            <span class="inline-block px-2 py-0.5 rounded font-bold ${isIhtisas ? 'bg-purple-100 text-purple-900' : 'bg-slate-200 text-slate-800'}">
+              ${isIhtisas ? '🌟 İhtisas' : '📘 Normal'}
+            </span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 2. KATEGORİ: DERS BAŞARISI & 4. SINIF ALAN SEÇİMİ
+  else if (studentDetailActiveTab === "grades") {
+    bodyHtml = `
+      <div class="space-y-4 text-xs">
+        <div class="grid grid-cols-3 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">
+              ${st.currentClassYear === 0 ? 'Hazırlık Sınav Puanı:' : 'Üniversite GANO:'}
+            </span>
+            <strong class="text-base ${st.currentClassYear === 0 ? 'text-indigo-800' : (st.gano && st.gano < 2.50 ? 'text-red-600' : 'text-emerald-800')}">
+              ${st.currentClassYear === 0 ? `${st.internalScore} / 100` : (st.gano ? st.gano.toFixed(2) : '3.15')}
+            </strong>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Tedrisat Not Ortalaması:</span>
+            <strong class="text-base text-slate-900">${st.internalScore} / 100</strong>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Akademik Yetkinlik:</span>
+            <strong class="text-base text-emerald-700">${st.academicCompetence} Puan</strong>
+          </div>
+        </div>
+
+        <!-- 4. SINIF İHTİSAS ALANI VE 2 SAATLİK METİN TAHLİLİ SEÇİMİ -->
+        <div class="p-4 rounded-2xl border ${st.currentClassYear >= 4 ? 'bg-purple-50/70 border-purple-300' : 'bg-slate-50 border-slate-200'} space-y-2">
+          <div class="flex justify-between items-center">
+            <h4 class="font-bold text-slate-900 text-xs flex items-center gap-1.5 font-amiri">
+              <i data-lucide="compass" class="text-purple-700 w-4 h-4"></i>
+              4. Sınıf İhtisas Alanı & Özel Metin Tahlili (ALAN-501)
+            </h4>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${st.currentClassYear >= 4 ? 'bg-purple-200 text-purple-900' : 'bg-slate-200 text-slate-600'}">
+              ${st.currentClassYear >= 4 ? '4. Sınıf İhtisas Düzeyi' : 'Henüz 4. Sınıfta Değil'}
+            </span>
+          </div>
+
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            4. sınıfa geçen talebeler uzmanlaşacakları ilim sahasını belirler. Seçilen alana göre öğrencinin haftalık ders programına <strong>2 saatlik "Alan Okuma & Metin Tahlili" (ALAN-501)</strong> semineri otomatik eklenir.
+          </p>
+
+          <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <select id="studentFieldChoice" class="flex-1 px-3 py-2 rounded-xl border border-purple-300 text-xs bg-white focus:outline-none">
+              <option value="Fıkıh ve Usul" ${(st.specializationField === 'Fıkıh ve Usul' || st.primaryField === 'fıkıh') ? 'selected' : ''}>Fıkıh ve Usûl-i Fıkıh (el-Hidâye & Telvîh)</option>
+              <option value="Hadis ve Tefsir" ${(st.specializationField === 'Hadis ve Tefsir' || st.primaryField === 'hadis' || st.primaryField === 'tefsir') ? 'selected' : ''}>Hadis ve Tefsir (Buhârî Şerhleri & Beyzâvî)</option>
+              <option value="Kelam ve Mantık" ${(st.specializationField === 'Kelam ve Mantık' || st.primaryField === 'kelam') ? 'selected' : ''}>Kelam ve Hikmet (Mevâkıf & Tehâfüt)</option>
+              <option value="Sosyal Bilimler" ${(st.specializationField === 'Sosyal Bilimler' || st.primaryField === 'sosyal') ? 'selected' : ''}>Sosyal Bilimler & Medeniyet (İbn Haldun & Umran)</option>
+              <option value="Klasik Arapça" ${(st.specializationField === 'Klasik Arapça' || st.primaryField === 'arapça') ? 'selected' : ''}>Klasik Arap Dili ve Belâgatı (Muhtasaru'l-Me'ânî)</option>
+            </select>
+            <button onclick="handleSelectStudentField('${st.id}')" class="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white rounded-xl font-bold text-xs shadow transition whitespace-nowrap">
+              Alanı Onayla & Ata
+            </button>
+          </div>
+
+          ${st.specializationField ? `
+            <div class="text-[11px] text-purple-900 font-semibold bg-white p-2 rounded-lg border border-purple-200 flex items-center gap-1.5">
+              <span>✓ Belirlenen İhtisas Sahası:</span>
+              <strong>${st.specializationField}</strong>
+              <span class="text-[10px] text-purple-700 font-normal">(+2 Saat/Hafta Metin Tahlili Aktif)</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // 3. KATEGORİ: KARAKTER & ZAAF TAHLİLİ
+  else if (studentDetailActiveTab === "character") {
+    bodyHtml = `
+      <div class="space-y-3 text-xs">
+        <div class="p-4 bg-red-50/60 rounded-2xl border border-red-200 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-red-800">Mülakat Sırasında Tespit Edilen Zaaf:</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-900 border border-red-300">
+              ⚠️ ${st.weakness || 'Mutedil / Belirgin Zaaf Yok'}
+            </span>
+          </div>
+          <p class="text-xs text-red-900 font-medium">${st.weaknessDesc || 'Talebenin göze çarpan vahim bir kusuru kaydedilmemiştir.'}</p>
+          <div class="text-[11px] text-slate-600 italic bg-white p-2.5 rounded-xl border border-red-100">
+            "${st.weaknessStatement || 'İdaremize karşı samimi ve edepli bir duruş sergilemiştir.'}"
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Stres Seviyesi:</span>
+            <div class="flex items-center gap-1.5 font-bold ${st.stressLevel > 55 ? 'text-red-600' : 'text-slate-800'}">
+              <span class="w-2.5 h-2.5 rounded-full ${st.stressLevel > 55 ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}"></span>
+              %${st.stressLevel}
+            </div>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Ahlak ve İntizam:</span>
+            <strong class="text-slate-800">${st.moralStatus}</strong>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Tedrisat Memnuniyeti:</span>
+            <strong class="text-emerald-800">%${st.satisfaction}</strong>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 4. KATEGORİ: YURT & DİSİPLİN SİCİLİ
+  else if (studentDetailActiveTab === "discipline") {
+    const disciplineList = st.disciplineRecord || [];
+    bodyHtml = `
+      <div class="space-y-3 text-xs">
+        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border border-slate-200">
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Resmi İhtar Sayısı:</span>
+            <strong class="${st.warningCount > 0 ? 'text-red-700' : 'text-emerald-800'} text-sm">${st.warningCount || 0} İhtar</strong>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">İdari Durum:</span>
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${st.warningCount >= 2 ? 'bg-red-100 text-red-900 border border-red-300' : 'bg-emerald-100 text-emerald-900 border border-emerald-300'}">
+              ${st.warningCount >= 2 ? 'Kovulma Eşiğinde (Kritik)' : 'Muntazam'}
+            </span>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+            <i data-lucide="file-warning" class="w-4 h-4 text-amber-600"></i>
+            Yurt Hadiseleri & Disiplin Tutanakları Kataloğu
+          </h4>
+
+          ${disciplineList.length === 0 ? `
+            <div class="p-6 bg-emerald-50 rounded-2xl border border-emerald-200 text-center text-xs text-emerald-900 space-y-1">
+              <div class="text-base font-bold">✓ Temiz Sicil</div>
+              <p class="text-[11px] text-emerald-800">
+                Bu talebenin dosyasında herhangi bir kural ihlali, yurt hadisesi veya yüz kızartıcı fiil tutanağı bulunmamaktadır.
+              </p>
+            </div>
+          ` : `
+            <div class="space-y-2 max-h-56 overflow-y-auto">
+              ${disciplineList.map(rec => `
+                <div class="p-3 bg-red-50/70 rounded-xl border border-red-200 text-xs space-y-1">
+                  <div class="flex justify-between items-start font-bold text-red-950">
+                    <span class="flex items-center gap-1.5">
+                      <span>🚨</span>
+                      ${rec.title}
+                    </span>
+                    <span class="text-[10px] text-red-700 font-mono bg-red-100 px-1.5 py-0.5 rounded">
+                      Şiddet: ${rec.severity || 3}/5 • ${rec.date || 'Tutanak'}
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-red-800 leading-relaxed">${rec.description || rec.desc || ''}</p>
+                  <div class="text-[10px] text-red-600 font-semibold pt-1 border-t border-red-100 flex justify-between items-center">
+                    <span>Ahlaki Etki: ${rec.moralImpact || '-1 Ahlak Notu'}</span>
+                    <span class="italic">Tutanak Şahsi Dosyaya İşlenmiştir</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        </div>
+      </div>
+    `;
+  }
+
+  // 5. KATEGORİ: AYLIK MÜSPET / MENFİ RAPORLAR
+  else if (studentDetailActiveTab === "reports") {
+    const reports = st.monthlyReports || [];
+    bodyHtml = `
+      <div class="space-y-2 text-xs">
+        <h4 class="font-bold text-slate-800 flex items-center gap-1.5 mb-2">
+          <i data-lucide="calendar" class="w-4 h-4 text-emerald-700"></i>
+          Aylık Akademik & Seyrüsüluk Gözlem Karnesi (${reports.length} Kayıt)
+        </h4>
+
+        ${reports.length === 0 ? `
+          <div class="p-6 bg-slate-50 rounded-2xl border border-dashed text-center text-xs text-slate-400">
+            Henüz aylık bir teftiş raporu düzenlenmemiştir.
+          </div>
+        ` : `
+          <div class="space-y-2 max-h-56 overflow-y-auto">
+            ${reports.map(r => `
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+                <div class="flex justify-between items-center font-bold text-slate-900">
+                  <span class="flex items-center gap-1.5 text-emerald-950 font-amiri">
+                    <i data-lucide="bookmark" class="w-3.5 h-3.5 text-emerald-700"></i>
+                    ${r.month} (${r.year}. Akademik Yıl)
+                  </span>
+                  <span class="text-emerald-800 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded text-[10px]">
+                    ${r.academicStatus || 'Normal Seyir'}
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-600 leading-relaxed">${r.notes || 'Derslere intizamla devam etti.'}</p>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      </div>
+    `;
+  }
+
   content.innerHTML = `
     <div class="space-y-4">
-      <div class="border-b border-slate-100 pb-2 flex justify-between items-center">
+      <!-- Üst Başlık -->
+      <div class="border-b border-slate-100 pb-3 flex justify-between items-start">
         <div>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Talebe İlim Sicil Dosyası</span>
-          <h3 class="text-lg font-bold text-slate-900 font-amiri">${st.fullName}</h3>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Talebe Şahsi İlim & Ahlak Sicili</span>
+          <h3 class="text-lg font-bold text-slate-900 font-amiri flex items-center gap-2">
+            <span>${st.fullName}</span>
+            <span class="text-xs px-2 py-0.5 rounded-full font-sans font-bold ${isIhtisas ? 'bg-purple-100 text-purple-900' : 'bg-slate-100 text-slate-700'}">
+              ${isIhtisas ? '🌟 İhtisas Programı' : '📘 Normal Tedrisat'}
+            </span>
+          </h3>
         </div>
-        <button onclick="closeStudentDetailModal()" class="text-slate-400 hover:text-slate-600">
+        <button onclick="closeStudentDetailModal()" class="text-slate-400 hover:text-slate-600 p-1">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <div class="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-2xl border">
-        <div><span class="text-slate-400">Fakülte:</span> <strong class="text-slate-800 block">${st.faculty}</strong></div>
-        <div>
-          <span class="text-slate-400">${st.currentClassYear === 0 ? 'Hazırlık Not Ortalaması:' : 'Üniversite GANO:'}</span>
-          <strong class="text-emerald-800 block">${st.currentClassYear === 0 ? st.internalScore + ' / 100' : (st.gano || 'Henüz Yok')}</strong>
-        </div>
-        <div><span class="text-slate-400">Stres:</span> <strong class="text-slate-800 block">%${st.stressLevel}</strong></div>
-        <div><span class="text-slate-400">Yetkinlik:</span> <strong class="text-slate-800 block">${st.academicCompetence} Puan</strong></div>
+      <!-- 5 Kategori Sekme Butonları -->
+      <div class="flex flex-wrap gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs">
+        ${tabs.map(t => `
+          <button onclick="switchStudentDetailTab('${t.key}')" class="flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center whitespace-nowrap ${studentDetailActiveTab === t.key ? 'bg-white text-emerald-900 shadow-sm border border-slate-200' : 'text-slate-600 hover:text-slate-900'}">
+            ${t.label}
+          </button>
+        `).join('')}
       </div>
 
-      <div>
-        <h4 class="font-bold text-xs text-slate-800 mb-2">Aylık Müspet & Menfi Gözlem Raporları</h4>
-        <div class="space-y-2 max-h-48 overflow-y-auto">
-          ${st.monthlyReports.map(r => `
-            <div class="p-2.5 bg-slate-50 rounded-xl border text-xs space-y-1">
-              <div class="flex justify-between font-bold text-slate-800">
-                <span>${r.month} (${r.year}. Yıl)</span>
-                <span class="text-emerald-700">${r.academicStatus}</span>
-              </div>
-              <div class="text-[11px] text-slate-600">${r.notes}</div>
-            </div>
-          `).join('')}
-        </div>
+      <!-- Sekme İçeriği -->
+      <div class="min-h-[220px]">
+        ${bodyHtml}
       </div>
     </div>
   `;
@@ -2384,8 +3325,27 @@ function showStudentDetailModal(studentId) {
   if (window.lucide) window.lucide.createIcons();
 }
 
+function switchStudentDetailTab(tabKey) {
+  studentDetailActiveTab = tabKey;
+  if (!activeDetailStudentId) return;
+  const st = game.state.students.find(s => s.id === activeDetailStudentId);
+  if (st) renderStudentDetailContent(st);
+}
+
+function handleSelectStudentField(studentId) {
+  const sel = document.getElementById("studentFieldChoice");
+  if (!sel) return;
+  const newField = sel.value;
+  const res = game.setStudentSpecializationField(studentId, newField);
+  alert(res.message);
+  const st = game.state.students.find(s => s.id === studentId);
+  if (st) renderStudentDetailContent(st);
+  renderAll();
+}
+
 function closeStudentDetailModal() {
-  document.getElementById("studentDetailModal").classList.add("hidden");
+  const modal = document.getElementById("studentDetailModal");
+  if (modal) modal.classList.add("hidden");
 }
 
 // Yurt Raporu Modalı

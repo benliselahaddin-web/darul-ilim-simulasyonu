@@ -134,53 +134,15 @@
           </div>
         </div>
 
-        <!-- 50 DERSLİK TEDRİSAT VE SEMİNER DAĞILIM MASASI (BAŞLANGIÇTA SERBEST BELİRLEME) -->
-        <div class="p-4 md:p-5 rounded-2xl border border-emerald-300 bg-emerald-50/30 space-y-3">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <div>
-              <h3 class="font-bold text-sm text-emerald-950 font-amiri flex items-center gap-2">
-                <i data-lucide="book-open" class="text-emerald-800 w-4 h-4"></i>
-                Tedrisat Seminerleri ve Ders Dağılım Masası (50 Derslik İlim Havuzu)
-              </h3>
-              <p class="text-[11px] text-slate-600 mt-0.5">
-                Hazır kalıp paket yerine her dersin hangi sınıf seviyesinde, hangi dönemde ve haftada kaç saat okutulacağını bizzat belirleyiniz.
-              </p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button type="button" onclick="loadDefaultCurriculumPreset()" class="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[11px] font-bold transition shadow-sm">
-                Önerilen Kadim Dağılımı Doldur
-              </button>
-              <button type="button" onclick="clearCurriculumAssignments()" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[11px] font-semibold transition">
-                Tümünü Sıfırla
-              </button>
-            </div>
+        <!-- MÜFREDAT VE SEMİNERLER BİLGİ KUTUSU (SEMİNER SEÇİMİ EKRANINDAN ERİŞİLİR) -->
+        <div class="p-4 rounded-2xl border border-emerald-300 bg-emerald-50/40 space-y-2">
+          <div class="flex items-center gap-2 text-emerald-950 font-bold text-sm font-amiri">
+            <i data-lucide="book-open" class="text-emerald-800 w-4 h-4"></i>
+            <span>Müfredat, Eserler ve İdeal Osmanlı Medresesi Nizamı</span>
           </div>
-
-          <!-- Arama ve Filtre -->
-          <div class="flex flex-wrap items-center gap-2 text-xs">
-            <input 
-              type="text" 
-              id="setupCourseSearch" 
-              placeholder="Ders kodu veya adı ara..." 
-              oninput="filterSetupCoursesList()" 
-              class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none flex-1 min-w-[180px]"
-            >
-            <select id="setupCourseBranchFilter" onchange="filterSetupCoursesList()" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white">
-              <option value="all">Tüm Branşlar (50 Ders)</option>
-              <option value="Klasik Arapça">Klasik Arapça (Sarf & Nahiv)</option>
-              <option value="Modern Arapça">Modern Arapça (Muhadese)</option>
-              <option value="Fıkıh ve Usul">Fıkıh ve Usûl-i Fıkıh</option>
-              <option value="Hadis ve Tefsir">Hadis ve Tefsir</option>
-              <option value="Kelam ve Mantık">Kelam, Mantık & Felsefe</option>
-              <option value="Sosyal Bilimler">Sosyal Bilimler & Medeniyet</option>
-              <option value="Sanat ve Metodoloji">Sanat & Metodoloji</option>
-            </select>
-          </div>
-
-          <!-- Ders Listesi (Kaydırılabilir) -->
-          <div id="setupCoursesListContainer" class="max-h-[360px] overflow-y-auto space-y-2 pr-1 border border-slate-200 rounded-xl p-2 bg-white divide-y divide-slate-100">
-            <!-- JS ile 50 ders doldurulur -->
-          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Dârü'l-İlim simülasyonunda 50'yi aşkın kadim metin ve çağdaş seminer yer almaktadır. Ders seçimi ve sınıf atamalarını, seminerler menüsündeki <strong>'Seminer Seçimi & Eser Havuzu'</strong> masasında dilediğiniz gibi yapabilir, yeni dersler ve metinler ekleyebilir veya tek tıkla <strong>İdeal Osmanlı Medresesi</strong> (Fıkıh, Kelam veya Sosyal Bilimler) senaryolarından birini devreye alabilirsiniz.
+          </p>
         </div>
 
         <!-- Bilgi Kutusu -->
@@ -201,12 +163,129 @@
   </div>
 
   <!-- ==================== 2. ANA YÖNETİM PANELİ (DASHBOARD) ==================== -->
-  <div id="dashboardScreen" class="hidden min-h-screen flex flex-col">
+  <div id="dashboardScreen" class="hidden min-h-screen flex flex-col relative">
+
+    <!-- SOL AÇILIR İDARE MECLİSİ MENÜSÜ (DRAWER & BACKDROP) -->
+    <div id="sidebarBackdrop" onclick="closeSidebarMenu()" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+    <aside id="sidebarDrawer" class="fixed top-0 left-0 bottom-0 z-50 w-72 md:w-80 bg-white border-r border-slate-200 shadow-2xl flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out">
+      <!-- Sidebar Header -->
+      <div class="p-4 bg-emerald-900 text-white flex justify-between items-center border-b border-emerald-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-800 border border-amber-400/40 text-amber-300 flex items-center justify-center font-bold">
+            <i data-lucide="landmark" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-[10px] text-amber-300 uppercase tracking-wider font-semibold">Dârü'l-İlim ve Hikmet</div>
+            <div class="font-bold text-sm font-amiri leading-tight">İdare Meclisi Menüsü</div>
+          </div>
+        </div>
+        <button onclick="closeSidebarMenu()" class="p-1.5 text-emerald-200 hover:text-white rounded-lg hover:bg-emerald-800/60 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Menü Maddeleri -->
+      <nav class="p-3 space-y-1 flex-1 overflow-y-auto text-xs">
+        <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Tedrisat & Talebe Halkası</div>
+
+        <button onclick="switchTab('students'); closeSidebarMenu();" id="sidebarBtn_students" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="graduation-cap" class="w-4 h-4 text-emerald-700"></i>
+            <span>Talebeler & Mülakat</span>
+          </div>
+          <span id="sidebarBadge_students" class="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">0</span>
+        </button>
+
+        <button onclick="switchTab('curriculum'); closeSidebarMenu();" id="sidebarBtn_curriculum" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="book-open" class="w-4 h-4 text-emerald-700"></i>
+            <span>Seminerler & Tedrisat</span>
+          </div>
+        </button>
+
+        <button onclick="switchTab('scholars'); closeSidebarMenu();" id="sidebarBtn_scholars" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="award" class="w-4 h-4 text-emerald-700"></i>
+            <span>Hoca Kadrosu & Pazar</span>
+          </div>
+        </button>
+
+        <div class="pt-2 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">İdari Yönetim & Teşkilat</div>
+
+        <button onclick="switchTab('staff'); closeSidebarMenu();" id="sidebarBtn_staff" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="users" class="w-4 h-4 text-emerald-700"></i>
+            <span>Personel & İdare</span>
+          </div>
+        </button>
+
+        <button onclick="switchTab('accounting'); closeSidebarMenu();" id="sidebarBtn_accounting" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="calculator" class="w-4 h-4 text-emerald-700"></i>
+            <span>Bilanço & Muhasebe</span>
+          </div>
+        </button>
+
+        <button onclick="switchTab('dorm'); closeSidebarMenu();" id="sidebarBtn_dorm" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="home" class="w-4 h-4 text-emerald-700"></i>
+            <span>Binalar & Talebe Yurdu</span>
+          </div>
+        </button>
+
+        <div class="pt-2 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Vakıf & Dış Münasebetler</div>
+
+        <button onclick="switchTab('donors'); closeSidebarMenu();" id="sidebarBtn_donors" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="handshake" class="w-4 h-4 text-emerald-700"></i>
+            <span>40 Hayırsever & Hâmiler</span>
+          </div>
+        </button>
+
+        <button onclick="switchTab('peers'); closeSidebarMenu();" id="sidebarBtn_peers" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="scale" class="w-4 h-4 text-emerald-700"></i>
+            <span>Kardeş Kurumlar</span>
+          </div>
+        </button>
+
+        <button onclick="switchTab('stats'); closeSidebarMenu();" id="sidebarBtn_stats" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-700"></i>
+            <span>İstatistikler</span>
+          </div>
+        </button>
+
+        <button onclick="switchTab('graduates'); closeSidebarMenu();" id="sidebarBtn_graduates" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="scroll" class="w-4 h-4 text-emerald-700"></i>
+            <span>Mezunlar & Raporlar</span>
+          </div>
+        </button>
+      </nav>
+
+      <!-- Sidebar Alt Bilgi -->
+      <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs space-y-1.5">
+        <div class="flex justify-between items-center text-[11px]">
+          <span class="text-slate-500 font-semibold">Talebe Uhuvveti:</span>
+          <span id="sidebarSocialCohesion" class="font-bold text-indigo-700">🤝 %55</span>
+        </div>
+        <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+          <div id="sidebarSocialCohesionBar" class="bg-indigo-600 h-full rounded-full transition-all" style="width: 55%"></div>
+        </div>
+      </div>
+    </aside>
+
     <!-- Üst Başlık ve Durum Çubuğu -->
     <header class="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-40 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-3">
-        <!-- Sol: Logo ve Kurum Bilgisi -->
+        <!-- Sol: Menü Butonu, Logo ve Kurum Bilgisi -->
         <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+          <button onclick="toggleSidebarMenu()" id="sidebarToggleBtn" class="px-3 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl shadow text-xs font-bold flex items-center gap-2 transition border border-amber-400/40" title="İdare Meclisi Menüsünü Aç">
+            <i data-lucide="menu" class="w-4 h-4"></i>
+            <span>Menü</span>
+          </button>
+
           <div class="flex items-center gap-2.5">
             <div class="w-10 h-10 rounded-xl bg-emerald-800 text-amber-400 flex items-center justify-center font-bold text-lg shadow border border-amber-500/30">
               <i data-lucide="landmark" class="w-5 h-5"></i>
@@ -233,7 +312,7 @@
         </div>
 
         <!-- Orta: Finans & Metrik Rozetleri -->
-        <div class="flex flex-wrap items-center gap-3 text-xs w-full md:w-auto justify-center">
+        <div class="flex flex-wrap items-center gap-2.5 text-xs w-full md:w-auto justify-center">
           <div class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
             <div class="text-[10px] text-slate-400 uppercase font-semibold">Vakıf Kasası</div>
             <div id="headerBudget" class="text-sm font-bold text-emerald-700">650.000 ₺</div>
@@ -248,12 +327,17 @@
           </div>
 
           <div class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Uhuvvet & Sosyallik</div>
+            <div id="headerSocialCohesion" class="text-sm font-bold text-indigo-700">🤝 %55</div>
+          </div>
+
+          <div class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
             <div class="text-[10px] text-slate-400 uppercase font-semibold">Aktif Talebe</div>
             <div id="headerStudentCount" class="text-sm font-bold text-slate-800">0 Talebe</div>
           </div>
 
           <div class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
-            <div class="text-[10px] text-slate-400 uppercase font-semibold">Aylık Talebe Bursu</div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">Aylık Burs</div>
             <div id="headerStipend" class="text-sm font-bold text-emerald-800">5.000 ₺/ay</div>
           </div>
         </div>
@@ -304,12 +388,30 @@
             </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-3 text-xs">
+          <div class="flex flex-wrap items-center gap-2.5 text-xs">
+            <!-- Sınıf Düzeyi Takvim Filtresi -->
+            <select id="calendarGradeSelect" onchange="handleCalendarGradeChange(this.value)" class="px-2.5 py-1 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-800 font-semibold text-xs transition shadow-sm focus:outline-none">
+              <option value="all">📅 Tüm Sınıflar (Genel İdare)</option>
+              <option value="0">📖 Hazırlık Sınıfı Takvimi</option>
+              <option value="1">📘 1. Sınıf Takvimi</option>
+              <option value="2">📗 2. Sınıf Takvimi</option>
+              <option value="3">📙 3. Sınıf Takvimi</option>
+              <option value="4">🌟 4. Sınıf (İhtisas) Takvimi</option>
+            </select>
+
+            <!-- Konferans Planla Butonu -->
+            <button onclick="openAddConferenceModal()" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold transition shadow-sm flex items-center gap-1" title="Takvime Yeni Konferans Ekle">
+              <i data-lucide="mic" class="w-3.5 h-3.5"></i>
+              <span>Konferans Planla</span>
+            </button>
+
             <!-- Takvim Görünümü Toggle: İdare Takvimi vs Öğrenci Tedrisat & Tatil Takvimi -->
             <button onclick="handleToggleCalendarMode()" id="calModeBtn" class="px-3 py-1 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold transition flex items-center gap-1.5 shadow-sm">
               <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-700"></i>
               <span id="calModeLabel">[İdare Takvimi]</span>
             </button>
+          </div>
+        </div>
 
             <div class="flex items-center gap-3 text-[11px]">
               <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> Bugün</span>
@@ -458,12 +560,6 @@
     </div>
   </div>
 
-  <!-- F) TALEBE PROFİL VE AYLIK MÜSPET/MENFİ RAPORLAR MODALI -->
-  <div id="studentDetailModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div id="studentDetailContent" class="ottoman-card max-w-2xl w-full p-6 rounded-3xl bg-white shadow-2xl border border-slate-300 max-h-[90vh] overflow-y-auto">
-      <!-- JS ile doldurulur -->
-    </div>
-  </div>
 
   <!-- G) YENİ YIL ÖZEL BURS BELİRLEME MODALI -->
   <div id="annualStipendModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -652,6 +748,367 @@
     </div>
   </div>
 
+  <!-- E) KONFERANS PLANLAMA MODALI -->
+  <div id="addConferenceModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="ottoman-card max-w-lg w-full p-6 rounded-3xl bg-white shadow-2xl border border-amber-300 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700">Akademik Takvim & Tefekkür</span>
+          <h3 class="text-base font-bold text-slate-900 font-amiri">🎙️ Yeni İlim Konferansı Planla</h3>
+        </div>
+        <button onclick="closeAddConferenceModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Konuşmacı Âlim / Akademisyen:</label>
+          <input type="text" id="confSpeaker" placeholder="Örn: Prof. Dr. Tahsin Görgün" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 bg-slate-50/50">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Konferans Başlığı / Mevzu:</label>
+          <input type="text" id="confTitle" placeholder="Örn: İslam Düşüncesinde Akıl, Nakil ve Medeniyet Tasavvuru" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 bg-slate-50/50">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Tarih (Ayın Günü):</label>
+            <input type="number" id="confDay" min="1" max="30" value="15" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50/50">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Mekan:</label>
+            <select id="confLocation" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50/50">
+              <option value="Medrese Konferans Salonu">Medrese Konferans Salonu</option>
+              <option value="Hasoda & Kütüphane">Hasoda & Kütüphane</option>
+              <option value="Tarihi Medrese Avlusu">Tarihi Medrese Avlusu</option>
+              <option value="Çevrimiçi Uluslararası Meclis">Çevrimiçi Uluslararası Meclis</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Hedef Sınıf Düzeyleri:</label>
+          <div class="grid grid-cols-3 gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-[11px]">
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="confGrade_all" checked onchange="toggleConfAllGrades(this.checked)" class="rounded text-amber-600">
+              <span class="font-bold">Tüm Sınıflar</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="confGrade_0" checked class="conf-grade-cb rounded text-amber-600">
+              <span>Hazırlık</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="confGrade_1" checked class="conf-grade-cb rounded text-amber-600">
+              <span>1. Sınıf</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="confGrade_2" checked class="conf-grade-cb rounded text-amber-600">
+              <span>2. Sınıf</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="confGrade_3" checked class="conf-grade-cb rounded text-amber-600">
+              <span>3. Sınıf</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="confGrade_4" checked class="conf-grade-cb rounded text-amber-600">
+              <span>4. Sınıf (İhtisas)</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Konuşmacı Telif & İkram Bütçesi:</label>
+          <select id="confCost" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50/50">
+            <option value="12000">12.000 ₺ (Standart Akademik İkram & Telif)</option>
+            <option value="20000">20.000 ₺ (Prestijli Hediye & Şehirlerarası Harcırah)</option>
+            <option value="0">0 ₺ (Vakıf Gönüllüsü / Fahri Katılım)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex gap-2">
+        <button onclick="closeAddConferenceModal()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">
+          İptal
+        </button>
+        <button onclick="saveScheduledConference()" class="w-1/2 py-2.5 bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold rounded-xl shadow transition">
+          Takvime Kaydet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- F) HOCA PAZARINA YENİ HOCA DAVET ET / EKLE MODALI -->
+  <div id="addScholarModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="ottoman-card max-w-lg w-full p-6 rounded-3xl bg-white shadow-2xl border border-emerald-300 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Akademik Kürsü & Müderris İkna Paneli</span>
+          <h3 class="text-base font-bold text-slate-900 font-amiri">🎖️ Yeni Hoca Davet Et / Pazara Ekle</h3>
+        </div>
+        <button onclick="closeAddScholarModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Hoca Adı Soyadı & Unvanı:</label>
+          <input type="text" id="schName" placeholder="Örn: Prof. Dr. Ekrem Demirli veya Şeyh Muhammed..." class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-600 bg-slate-50/50">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">İlim Branşı:</label>
+            <select id="schBranch" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <option value="Klasik Arapça">Klasik Arapça (Sarf & Nahiv)</option>
+              <option value="Modern Arapça">Modern Arapça (Muhadese)</option>
+              <option value="Fıkıh ve Usul" selected>Fıkıh ve Usûl-i Fıkıh</option>
+              <option value="Hadis ve Tefsir">Hadis ve Tefsir</option>
+              <option value="Kelam ve Mantık">Kelam, Mantık & Felsefe</option>
+              <option value="Sosyal Bilimler">Sosyal Bilimler & Medeniyet</option>
+              <option value="Sanat ve Metodoloji">Sanat & Metodoloji</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Yaş Kategorisi:</label>
+            <select id="schAge" onchange="previewScholarCalculations()" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <option value="genc">28-35 Yaş (Genç Akademisyen)</option>
+              <option value="olgun" selected>36-50 Yaş (Olgun Müderris)</option>
+              <option value="duayen">51-65 Yaş (Duayen Âlim)</option>
+              <option value="pir">65+ Yaş (Şeyhü'l-Kurra / Pir)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Tecrübe Seviyesi:</label>
+            <select id="schExp" onchange="previewScholarCalculations()" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <option value="1">1: Mübtedî / Yeni Mezun Doktorant</option>
+              <option value="2">2: Muallim / Yetkin Okutman</option>
+              <option value="3" selected>3: Müderris / Kıdemli Hoca</option>
+              <option value="4">4: Başmüderris / Profesör</option>
+              <option value="5">5: Allâme / Sahasında Zirve İsim</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">İkamet & İkna Zorluğu (5 Seviye):</label>
+            <select id="schProximity" onchange="previewScholarCalculations()" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <option value="1">1: Çok Kolay - Kurum Yanı (Fatih)</option>
+              <option value="2" selected>2: Kolay - İstanbul İçi</option>
+              <option value="3">3: Orta - Marmara / Hızlı Tren</option>
+              <option value="4">4: Zor - Türkiye Geneli (Uçak)</option>
+              <option value="5">5: Çok Zor - Yurt Dışı Âlimi (Mısır/Amman/Medine)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Otomatik Hesaplanan Bilgi Kartı -->
+        <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-1.5">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-900">Otomatik Hesaplanan Şartlar:</div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <span class="text-slate-500">Asgari Kurum İtibarı:</span>
+              <div id="schCalcMinRep" class="font-bold text-amber-800">55 Puan</div>
+            </div>
+            <div>
+              <span class="text-slate-500">Talep Edeceği Maaş / Telif:</span>
+              <div id="schCalcSalary" class="font-bold text-emerald-800">45.000 ₺ / ay</div>
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-1">
+            *Yurt dışından gelen hocalarda uçak ve konaklama harcırahı maaşa otomatik dahil edilir. Yaş ve tecrübe arttıkça minimum itibar eşiği yükselir.
+          </p>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex gap-2">
+        <button onclick="closeAddScholarModal()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">
+          İptal
+        </button>
+        <button onclick="saveCustomScholar()" class="w-1/2 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow transition">
+          Hoca Pazarına Ekle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- G) GELİŞMİŞ TALEBE ŞAHSİ SİCİL VE İLİM DOSYASI MODALI (5 KATEGORİLİ) -->
+  <div id="studentDetailModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="studentDetailContent" class="ottoman-card max-w-2xl w-full p-6 rounded-3xl bg-white shadow-2xl border border-emerald-300 max-h-[90vh] overflow-y-auto">
+      <!-- JS ile dinamik olarak doldurulur -->
+    </div>
+  </div>
+
+  <!-- H) YENİ TEDRİSAT DERSİ / METNİ EKLEME MODALI -->
+  <div id="customCourseModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="ottoman-card max-w-lg w-full p-6 rounded-3xl bg-white shadow-2xl border border-emerald-300 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Müfredat & Eser Havuzu</span>
+          <h3 class="text-base font-bold text-slate-900 font-amiri">📚 Yeni Ders ve Metin Ekle</h3>
+        </div>
+        <button onclick="closeCustomCourseModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Ders Kodu:</label>
+            <input type="text" id="newCourseCode" placeholder="Örn: USL-201" class="w-full px-3 py-2 rounded-xl border border-slate-300 uppercase focus:ring-2 focus:ring-emerald-600 bg-slate-50/50">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">İlim Branşı:</label>
+            <select id="newCourseBranch" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <option value="Klasik Arapça">Klasik Arapça (Sarf & Nahiv)</option>
+              <option value="Modern Arapça">Modern Arapça (Muhadese)</option>
+              <option value="Fıkıh ve Usul" selected>Fıkıh ve Usûl-i Fıkıh</option>
+              <option value="Hadis ve Tefsir">Hadis ve Tefsir</option>
+              <option value="Kelam ve Mantık">Kelam, Mantık & Felsefe</option>
+              <option value="Sosyal Bilimler">Sosyal Bilimler & Medeniyet</option>
+              <option value="Sanat ve Metodoloji">Sanat & Metodoloji</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Ders Adı:</label>
+          <input type="text" id="newCourseName" placeholder="Örn: Menârü'l-Envâr fi Usûli'l-Fıkh" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-600 bg-slate-50/50">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Okutulacak Metin / Eser:</label>
+          <input type="text" id="newCourseTextbook" placeholder="Örn: Menârü'l-Envâr (en-Nesefî) ve İbni Melek Şerhi" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-600 bg-slate-50/50">
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Osmanlı Kademesi:</label>
+            <select id="newCourseLevel" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <option value="1">Seviye 1: İbtidâ-i Hâric</option>
+              <option value="2" selected>Seviye 2: Hâric-Dâhil</option>
+              <option value="3">Seviye 3: Sahn-ı Semân</option>
+              <option value="4">Seviye 4: Süleymaniye</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Haftalık Saat:</label>
+            <select id="newCourseHours" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <option value="2">2 saat</option>
+              <option value="3" selected>3 saat</option>
+              <option value="4">4 saat</option>
+              <option value="6">6 saat</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Atanacak Sınıf:</label>
+            <select id="newCourseClass" class="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <option value="-1">Müfredat Dışı (Yalnızca Havuzda)</option>
+              <option value="0">Hazırlık Sınıfı</option>
+              <option value="1" selected>1. Sınıf</option>
+              <option value="2">2. Sınıf</option>
+              <option value="3">3. Sınıf</option>
+              <option value="4">4. Sınıf</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex gap-2">
+        <button onclick="closeCustomCourseModal()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">
+          İptal
+        </button>
+        <button onclick="saveCustomCourseToPool()" class="w-1/2 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow transition">
+          Dersi Havuza Ekle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- I) 3 İDEAL OSMANLI MEDRESESİ SENARYOSU SEÇİM MODALI -->
+  <div id="idealScenarioModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="ottoman-card max-w-2xl w-full p-6 rounded-3xl bg-white shadow-2xl border border-amber-300 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700">Tevâzün ve Kadim Eser Hiyerarşisi</span>
+          <h3 class="text-base font-bold text-slate-900 font-amiri">📜 İdeal Osmanlı Medresesi Müfredat Senaryoları</h3>
+        </div>
+        <button onclick="closeIdealScenarioModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-600 leading-relaxed bg-amber-50/60 p-3 rounded-2xl border border-amber-200">
+        Bu senaryolar, Osmanlı medrese sisteminin 4 temel kademesini (İbtidâ-i Hâric, Hâric-Dâhil, Sahn-ı Semân ve Süleymaniye) esas alarak hazırlanmıştır. Tek tıkla ilgili branşın omurga derslerini ve haftalık saat dağılımını otomatik oluşturur.
+        <br><strong class="text-amber-900 mt-1 block">Tevâzün İlkesi:</strong> Seçtiğiniz ana branşın dersleri kurumunuza +%25 ilim ve itibar primi kazandırır; ancak tek bir branşın ders saati toplam müfredatın <strong>%60'ını aşamaz</strong>.
+      </p>
+
+      <div class="space-y-3">
+        <!-- 1. Fıkıh & Usûl Senaryosu -->
+        <div class="p-4 rounded-2xl border border-emerald-200 bg-white hover:border-emerald-500 transition shadow-sm space-y-2">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">⚖️ Fıkıh & Usûl-i Fıkıh Ekolü</span>
+              <h4 class="font-bold text-sm text-slate-900 mt-1">Fıkıh ve Usûlü Ağırlıklı Kadim Osmanlı Medresesi</h4>
+            </div>
+            <button onclick="handleApplyOttomanScenario('fikh_usul')" class="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl transition shadow">
+              Bu Senaryoyu Uygula
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            Kudûrî, Mültekâ, Dürer, Menâr, Şerhu'l-Vikāye, Tavzîh, Telvîh ve el-Hidâye omurgasında, fetva ve kaza kabiliyeti kazandıran klasik medrese nizâmı.
+          </p>
+          <div class="text-[10px] text-emerald-800 font-semibold">Kazanım: Fıkıh İlim Gücü +15, Kurum İtibarı +10 (Maksimum %60 Branş Kotası)</div>
+        </div>
+
+        <!-- 2. Kelam & Felsefe Senaryosu -->
+        <div class="p-4 rounded-2xl border border-purple-200 bg-white hover:border-purple-500 transition shadow-sm space-y-2">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">🧠 Kelam & Akli İlimler Ekolü</span>
+              <h4 class="font-bold text-sm text-slate-900 mt-1">Kelam, Mantık ve Hikmet Ağırlıklı Sahn-ı Semân</h4>
+            </div>
+            <button onclick="handleApplyOttomanScenario('kelam_felsefe')" class="px-3 py-1.5 bg-purple-800 hover:bg-purple-900 text-white text-xs font-bold rounded-xl transition shadow">
+              Bu Senaryoyu Uygula
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            Îsâgûcî, Şemsiyye, Şerhu'l-Akâid, Hidâyetü'l-Hikme, Hâşiye-i Tecrîd, Gazzâlî Tehâfütü ve Şerhu'l-Mevâkıf ile felsefi kelam derinliği kazandıran Sahn-ı Semân modeli.
+          </p>
+          <div class="text-[10px] text-purple-800 font-semibold">Kazanım: Kelam & Felsefe Gücü +18, Kurum İtibarı +12 (Maksimum %60 Branş Kotası)</div>
+        </div>
+
+        <!-- 3. Sosyal Bilimler & Medeniyet Senaryosu -->
+        <div class="p-4 rounded-2xl border border-blue-200 bg-white hover:border-blue-500 transition shadow-sm space-y-2">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">🌍 Sosyal Bilimler & Medeniyet</span>
+              <h4 class="font-bold text-sm text-slate-900 mt-1">Sosyal Bilimler ve Medeniyet Düşüncesi Ağırlıklı İleri Tedrisat</h4>
+            </div>
+            <button onclick="handleApplyOttomanScenario('sosyal_medeniyet')" class="px-3 py-1.5 bg-blue-800 hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition shadow">
+              Bu Senaryoyu Uygula
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            Klasik alet ilimlerini tamamlayıp İbn Haldun Umranı, İslam İktisat Doktrini, Siyaset Felsefesi, Kurumlar Tarihi ve Çağdaş Sosyal Teorileri mezceden model.
+          </p>
+          <div class="text-[10px] text-blue-800 font-semibold">Kazanım: Sosyal Bilimler Gücü +16, Kurum İtibarı +9 (Maksimum %60 Branş Kotası)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- J) YURT MÜDÜRÜ İSTİŞARE VE BÜYÜK TADİLAT MODALI -->
+  <div id="dormConsultationModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="dormConsultationContent" class="ottoman-card max-w-2xl w-full p-6 rounded-3xl bg-white shadow-2xl border border-emerald-300 max-h-[90vh] overflow-y-auto">
+      <!-- JS ile doldurulur -->
+    </div>
+  </div>
+
   <!-- FIREBASE SDK (COMPAT SÜRÜMÜ) -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -666,6 +1123,7 @@
   <script src="js/data/donors.js"></script>
   <script src="js/data/peerInstitutions.js"></script>
   <script src="js/engine/studentEngine.js"></script>
+  <script src="js/data/dormIncidents.js"></script>
   <script src="js/engine/simulationEngine.js"></script>
   <script src="js/ui/app.js"></script>
 </body>

@@ -68,6 +68,17 @@ class DarulIlimGame {
       reputation: 35, // 35 İLE BAŞLAR
       reputationGainedThisYear: 0, // Senede min 2, ortalama 3, max 5 artar
       budget: 650000, // 650.000 ₺ Başlangıç Kasası
+      socialCohesion: 55, // Öğrenciler Arası Uhuvvet ve Sosyallik Düzeyi (%0 - %100)
+
+      // Planlanan Konferanslar
+      scheduledConferences: [],
+
+      // Yurt Arızaları ve Disiplin Hadiseleri Takibi
+      resolvedIncidentsHistory: [],
+      monthlyDormIncidentsLog: [],
+      pendingDormMaintenanceProposal: null,
+      activeOttomanScenario: null,
+      scholarsMarket: [],
 
       // Kurum & Yurt Binası Pazarı Durumu
       currentBuildingId: "bldg_1_fatih", // 1. Seviye Fatih Kiralık Eski Bina
@@ -538,6 +549,28 @@ class DarulIlimGame {
     }
 
     this.updateMonthlyStudentSatisfaction();
+
+    // Sosyallik / Uhuvvet Düzeyi ve Yurt İmkânları Etkisi
+    let dormPotential = 55;
+    if (this.state.currentDormId === "dorm_lvl_2") dormPotential = 75;
+    if (this.state.currentDormId === "dorm_lvl_3") dormPotential = 92;
+    if (this.state.upgrades && this.state.upgrades.library >= 2) dormPotential += 5;
+    if (this.state.upgrades && this.state.upgrades.dormDining >= 2) dormPotential += 5;
+    dormPotential = Math.min(100, dormPotential);
+
+    const currentCohesion = this.state.socialCohesion || 55;
+    const drift = (dormPotential - currentCohesion) * 0.25;
+    this.state.socialCohesion = Math.min(100, Math.max(20, Math.round(currentCohesion + drift)));
+
+    if (this.state.socialCohesion >= 70) {
+      activeStudents.forEach(st => {
+        st.stressLevel = Math.max(5, st.stressLevel - 4);
+        st.academicCompetence += 2;
+      });
+    }
+
+    // Yurt Müdürü Aylık Büyük Tadilat ve İhtiyaç Teklifi
+    this.prepareMonthlyDormMaintenanceProposal();
   }
 
   // Yeni Akademik Yıla Geçiş (Temmuz Sonu / Ağustos Başı)
@@ -760,6 +793,40 @@ class DarulIlimGame {
         };
       }
     }
+
+    // 6. Planlanan Konferans Kontrolü
+    if (this.state.scheduledConferences && this.state.scheduledConferences.length > 0) {
+      const todayConfs = this.state.scheduledConferences.filter(c => 
+        !c.completed && c.monthIndex === this.state.currentMonthIndex && c.day === this.state.currentDay
+      );
+      todayConfs.forEach(c => {
+        c.completed = true;
+        this.state.reputation += 4;
+        this.state.socialCohesion = Math.min(100, (this.state.socialCohesion || 55) + 6);
+        
+        let affectedCount = 0;
+        this.state.students.forEach(st => {
+          const isTarget = c.targetGrades.includes("all") || c.targetGrades.includes(st.currentClassYear) || c.targetGrades.includes(String(st.currentClassYear));
+          if (isTarget && st.status === "active") {
+            st.stressLevel = Math.max(5, st.stressLevel - 14);
+            st.academicCompetence += 6;
+            st.satisfaction = Math.min(100, st.satisfaction + 8);
+            affectedCount++;
+          }
+        });
+        
+        this.addNotification({
+          title: `🎙️ İlim Konferansı İcra Edildi: ${c.speaker}`,
+          message: `'${c.title}' konulu sempozyum ${c.location} mevkiinde ${affectedCount} talebenin iştirakiyle icra edildi. İtibar +4, Talebe Ufku +10.`,
+          type: "academic"
+        });
+      });
+    }
+
+    // 7. Yurt Hadiseleri & Arızaları (Her ayın 6, 16 ve 26. günleri periyodik gerçekleşir)
+    if (this.state.currentDay === 6 || this.state.currentDay === 16 || this.state.currentDay === 26) {
+      this.processDailyDormIncidents();
+    }
   }
 
   // Müdür Yardımcısının Stres Danışması
@@ -965,6 +1032,10 @@ class DarulIlimGame {
       "Oda Temsilcileri Aylık Düzen ve Nöbet Toplantısı"
     ];
 
+    const monthlyIncidents = this.state.monthlyDormIncidentsLog || [];
+    const handledCount = monthlyIncidents.filter(i => i.isHandled).length;
+    const pendingCount = monthlyIncidents.filter(i => !i.isHandled).length;
+
     return {
       managerName: ym.name,
       managerTitle: ym.title,
@@ -972,10 +1043,15 @@ class DarulIlimGame {
       capacity: currentCapacity,
       occupancy: active.length,
       dormSatisfaction: this.state.dormStatus.satisfaction,
+      socialCohesion: this.state.socialCohesion || 55,
       dormBalance: dormBalance,
       eventsHeld: eventsHeld,
       problemStudents: problemStudents,
-      summary: `${ym.name} arz ediyor: "Yurdumuzda huzur ve asayiş elhamdülillah yerindedir. Talebelerimiz yemek kalitesinden memnun olmakla birlikte, sınav haftalarında etüt salonundaki çay ikramının artırılmasını rica etmektedir."`
+      monthlyIncidents: monthlyIncidents,
+      handledCount: handledCount,
+      pendingCount: pendingCount,
+      maintenanceProposal: this.state.pendingDormMaintenanceProposal,
+      summary: `${ym.name} arz ediyor: "Yurdumuzda uhuvvet seviyemiz %${this.state.socialCohesion || 55} düzeyindedir. Ay boyunca meydana gelen ${monthlyIncidents.length} hadisenin ${handledCount} tanesi idaremizce çözüme kavuşturulmuştur."`
     };
   }
 
@@ -1532,14 +1608,18 @@ class DarulIlimGame {
 
   // Hoca Kadroya Kat (Pazar Kiralama)
   hireScholar(scholarId) {
-    const pool = this.state.genderMode === "female" ? SCHOLARS_DATA_FEMALE : SCHOLARS_DATA_MALE;
-    const scholar = pool.find(s => s.id === scholarId);
+    let pool = this.state.genderMode === "female" ? SCHOLARS_DATA_FEMALE : SCHOLARS_DATA_MALE;
+    if (this.state.scholarsMarket && this.state.scholarsMarket.length > 0) {
+      pool = [...this.state.scholarsMarket, ...pool];
+    }
+    const scholar = pool.find(s => s.id === scholarId || String(s.id) === String(scholarId));
     if (!scholar) return { success: false, message: "Hoca bulunamadı." };
 
-    if (this.state.reputation < scholar.minReputationRequired) {
+    const reqRep = scholar.minReputationRequired !== undefined ? scholar.minReputationRequired : (scholar.minReputation || 20);
+    if (this.state.reputation < reqRep) {
       return {
         success: false,
-        message: `${scholar.title} ${scholar.name} teklifinizi geri çevirdi: "Kurumunuzun akademik itibarı (Mevcut: ${this.state.reputation}) henüz benim tedrisatım için yeterli olgunlukta değildir (Gereken İtibar: ${scholar.minReputationRequired})."`
+        message: `${scholar.title} ${scholar.name} teklifinizi geri çevirdi: "Kurumunuzun akademik itibarı (Mevcut: ${this.state.reputation}) henüz benim tedrisatım için yeterli olgunlukta değildir (Gereken İtibar: ${reqRep})."`
       };
     }
 
@@ -1709,6 +1789,366 @@ class DarulIlimGame {
     });
     this.saveToStorage();
     return { updatedCount, ihtisasCount };
+  }
+
+  // ==================== YURT HADİSELERİ VE ARIZA YÖNETİMİ ====================
+  processDailyDormIncidents() {
+    if (typeof DORM_INCIDENTS_CATALOG === "undefined" || DORM_INCIDENTS_CATALOG.length === 0) return;
+
+    if (!this.state.resolvedIncidentsHistory) this.state.resolvedIncidentsHistory = [];
+    if (!this.state.monthlyDormIncidentsLog) this.state.monthlyDormIncidentsLog = [];
+
+    // Tekrara düşmemek için bu dönem henüz çıkmamış bir arıza seç
+    const available = DORM_INCIDENTS_CATALOG.filter(inc => !this.state.resolvedIncidentsHistory.includes(inc.id));
+    const pool = available.length > 0 ? available : DORM_INCIDENTS_CATALOG;
+    const incident = pool[Math.floor(Math.random() * pool.length)];
+
+    this.state.resolvedIncidentsHistory.push(incident.id);
+    if (this.state.resolvedIncidentsHistory.length > 45) {
+      this.state.resolvedIncidentsHistory.shift();
+    }
+
+    // Yurt müdürünün çözme başarısı (yetkinliğe göre %85 vs %50)
+    const ym = this.state.dormManager;
+    const resolutionChance = ym ? 0.85 : 0.50;
+    const isHandled = Math.random() < resolutionChance;
+
+    const cost = incident.repairCost || 0;
+    if (cost > 0 && isHandled) {
+      this.state.budget = Math.max(0, this.state.budget - cost);
+    }
+
+    // Eğer hadise kural ihlali veya yüz kızartıcı bir suç ise talebe dosyasına ANINDA işlenir
+    let involvedStudent = null;
+    const active = this.state.students.filter(s => s.status === "active");
+    if (incident.isDisciplinary && active.length > 0) {
+      involvedStudent = active[Math.floor(Math.random() * active.length)];
+      if (!involvedStudent.disciplineRecord) involvedStudent.disciplineRecord = [];
+
+      involvedStudent.disciplineRecord.unshift({
+        date: `${this.state.currentDay} ${MONTH_NAMES[this.state.currentMonthIndex]} (${this.state.academicYear}. Yıl)`,
+        title: incident.recordTitle || incident.title,
+        notes: incident.desc,
+        severity: incident.severity,
+        actionTaken: isHandled ? "Yurt Müdürü tarafından resmi tutanak tanzim edildi ve ikaz verildi." : "İdareye havale edildi."
+      });
+
+      involvedStudent.warningCount = (involvedStudent.warningCount || 0) + 1;
+      involvedStudent.moralStatus = incident.severity >= 4 ? "zayıf" : "orta";
+      involvedStudent.stressLevel = Math.min(95, involvedStudent.stressLevel + (incident.stressDelta || 12));
+      if (incident.severity >= 4) {
+        involvedStudent.hasSeriousMisconduct = true;
+      }
+    }
+
+    // Genel sosyallik ve stres tesirleri
+    if (incident.stressDelta) {
+      active.forEach(st => {
+        st.stressLevel = Math.min(95, Math.max(5, st.stressLevel + Math.round(incident.stressDelta * 0.4)));
+      });
+    }
+    if (incident.cohesionDelta) {
+      this.state.socialCohesion = Math.min(100, Math.max(15, (this.state.socialCohesion || 55) + incident.cohesionDelta));
+    }
+
+    const logEntry = {
+      id: incident.id,
+      day: this.state.currentDay,
+      month: MONTH_NAMES[this.state.currentMonthIndex],
+      title: incident.title,
+      desc: incident.desc,
+      category: incident.category,
+      cost: cost,
+      isDisciplinary: incident.isDisciplinary,
+      involvedStudentName: involvedStudent ? involvedStudent.fullName : null,
+      isHandled: isHandled,
+      statusText: isHandled ? "✅ Yurt Müdürü Çözdü" : "⚠️ Müdahale Gecikti / İdareye İntikal Etti"
+    };
+
+    this.state.monthlyDormIncidentsLog.unshift(logEntry);
+
+    this.addNotification({
+      title: `🏠 Yurt Hadisesi: ${incident.title}`,
+      message: `${incident.desc} ${isHandled ? 'Yurt müdürü derhal müdahale etti.' : 'Müdahale gecikti.'} ${involvedStudent ? `(İlgili Talebe: ${involvedStudent.fullName} - Dosyasına İşlendi)` : ''}`,
+      type: incident.isDisciplinary ? "warning" : "info"
+    });
+  }
+
+  // Yurt Müdürü Aylık Büyük Tadilat Teklifi
+  prepareMonthlyDormMaintenanceProposal() {
+    const proposals = [
+      { id: "prop_kazan", title: "Kazan Dairesi & Kalorifer Tesisatı Yenilemesi", cost: 50000, desc: "Eskiyen boru hatlarının çelik borularla değişimi ve kalorifer veriminin artırılması.", effect: "Arıza riski %40 azalır, Talebe memnuniyeti +8." },
+      { id: "prop_hasoda", title: "Hasoda & Şark Köşesi Çay Ocağı Tefrişatı", cost: 40000, desc: "Talebelerin akşam mütalaası yapabileceği geleneksel sedirli ve semaverli hasoda tefrişi.", effect: "Uhuvvet & Sosyallik +15, Talebe stresi -10." },
+      { id: "prop_cati", title: "Kütüphane Çatı İzolasyonu ve Nem Bariyeri", cost: 35000, desc: "Çatı kalkanlarının su yalıtımı ve nem cihazı montajı.", effect: "Vakıf kitapları koruma altına alınır, Arıza riski -25%." },
+      { id: "prop_mutfak", title: "Endüstriyel Mutfak Revizyonu ve Soğuk Hava Deposu", cost: 55000, desc: "Aşçı ünitesine paslanmaz teçhizat ve dijital soğutucu ilavesi.", effect: "Yemek hijyeni tavan yapar (+15), Aşçı morali artar." },
+      { id: "prop_guvenlik", title: "Yangın Algılama ve Akıllı Güvenlik Turnikeleri", cost: 28000, desc: "Tüm katlara optik duman sensörü ve kartlı giriş otomasyonu.", effect: "Yurt güvenliği +25, Kaçak girişler sıfırlanır." }
+    ];
+
+    const idx = (this.state.currentMonthIndex + this.state.academicYear) % proposals.length;
+    this.state.pendingDormMaintenanceProposal = proposals[idx];
+  }
+
+  approveDormMaintenanceProposal(proposalId) {
+    const p = this.state.pendingDormMaintenanceProposal;
+    if (!p || p.id !== proposalId) return { success: false, message: "Teklif bulunamadı." };
+
+    if (this.state.budget < p.cost) {
+      return { success: false, message: "Vakıf kasasında yeterli bütçe bulunmuyor." };
+    }
+
+    this.state.budget -= p.cost;
+    this.state.socialCohesion = Math.min(100, (this.state.socialCohesion || 55) + 12);
+    this.state.dormStatus.satisfaction = Math.min(100, this.state.dormStatus.satisfaction + 10);
+    this.state.pendingDormMaintenanceProposal = null;
+
+    this.addNotification({
+      title: `🛠️ Yurt Tadilat Ödeneği Tahsis Edildi: ${p.title}`,
+      message: `${p.cost.toLocaleString('tr-TR')} ₺ bütçe ayrılarak tadilat başlatıldı. Uhuvvet ve memnuniyet yükseldi.`,
+      type: "success"
+    });
+
+    this.saveToStorage();
+    return { success: true, message: "Tadilat projesi onaylandı." };
+  }
+
+  evaluateDormManager(actionType) {
+    const ym = this.state.dormManager;
+    if (!ym) return { success: false, message: "Atanmış yurt müdürü bulunmuyor." };
+
+    if (actionType === "praise") {
+      this.state.reputation = Math.min(98, this.state.reputation + 2);
+      this.state.socialCohesion = Math.min(100, (this.state.socialCohesion || 55) + 4);
+      this.addNotification({
+        title: `👏 Yurt Müdürü Takdir Edildi`,
+        message: `${ym.name} gösterdiği gayret ve arızalara hızlı müdahalesi sebebiyle tebrik edildi. İtibar +2.`,
+        type: "success"
+      });
+    } else {
+      ym.warningCount = (ym.warningCount || 0) + 1;
+      this.addNotification({
+        title: `⚠️ Yurt Müdürüne İdari İhtar Verildi`,
+        message: `${ym.name}'e yurttaki aksaklıklar ve geciken tamiratlar sebebiyle resmi ikaz tebliğ edildi.`,
+        type: "warning"
+      });
+    }
+
+    this.saveToStorage();
+    return { success: true };
+  }
+
+  // ==================== KONFERANS VE İLİM ETKİNLİĞİ PLANLAMA ====================
+  scheduleConference({ speaker, title, day, monthIndex, location, targetGrades, cost }) {
+    const conf = {
+      id: "conf_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      speaker: speaker,
+      title: title,
+      day: parseInt(day) || 15,
+      monthIndex: parseInt(monthIndex) !== undefined ? parseInt(monthIndex) : this.state.currentMonthIndex,
+      location: location || "Medrese Konferans Salonu",
+      targetGrades: targetGrades && targetGrades.length > 0 ? targetGrades : ["all"],
+      cost: parseInt(cost) || 12000,
+      completed: false
+    };
+
+    if (!this.state.scheduledConferences) this.state.scheduledConferences = [];
+    this.state.scheduledConferences.push(conf);
+
+    if (conf.cost > 0 && this.state.budget >= conf.cost) {
+      this.state.budget -= conf.cost;
+    }
+
+    this.addNotification({
+      title: `🎙️ Yeni Konferans Planlandı: ${speaker}`,
+      message: `'${title}' başlıklı konferans ${conf.day} ${MONTH_NAMES[conf.monthIndex]} tarihine takvime işlendi.`,
+      type: "info"
+    });
+
+    this.saveToStorage();
+    return conf;
+  }
+
+  // ==================== HOCA PAZARINA ÖZEL HOCA EKLEME ====================
+  addCustomScholarToMarket({ name, title, branch, ageCategory, experienceLevel, proximityDifficulty, gender }) {
+    const exp = parseInt(experienceLevel) || 3;
+    const prox = parseInt(proximityDifficulty) || 2;
+    const ageCat = ageCategory || "olgun";
+
+    // Min İtibar Hesabı
+    const ageBonus = ageCat === "pir" ? 12 : (ageCat === "duayen" ? 8 : (ageCat === "olgun" ? 4 : 0));
+    const minRep = Math.min(95, Math.max(20, 25 + (exp * 8) + (prox * 6) + ageBonus));
+
+    // Aylık Maaş / Telif Hesabı
+    const baseSalary = 16000;
+    const expMult = [1.0, 1.4, 2.0, 2.8, 4.0][exp - 1] || 2.0;
+    const proxMult = [1.0, 1.15, 1.4, 2.0, 3.2][prox - 1] || 1.2;
+    const ageSalaryBonus = ageCat === "pir" ? 8000 : (ageCat === "duayen" ? 5000 : 0);
+    const monthlySalary = Math.round((baseSalary * expMult * proxMult) + ageSalaryBonus);
+
+    const proxLabels = ["Kurum Yanı (Fatih)", "İstanbul İçi", "Marmara / Hızlı Tren", "Şehirlerarası Uçak", "Yurt Dışı / Uluslararası"];
+    const ageLabels = {
+      genc: "28-35 Yaş (Genç Akademisyen)",
+      olgun: "36-50 Yaş (Olgun Müderris)",
+      duayen: "51-65 Yaş (Duayen Âlim)",
+      pir: "65+ Yaş (Şeyhü'l-Kurra / Pir)"
+    };
+
+    const scholarObj = {
+      id: "custom_sch_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      name: name,
+      title: title || (exp >= 4 ? "Prof. Dr." : (exp >= 3 ? "Doç. Dr." : "Dr. Öğr. Üyesi")),
+      branch: branch || "Fıkıh ve Usul",
+      ageCategory: ageCat,
+      ageCategoryLabel: ageLabels[ageCat] || "Olgun Müderris",
+      experienceLevel: exp,
+      proximityDifficulty: prox,
+      proximityLabel: proxLabels[prox - 1] || "İstanbul İçi",
+      specialty: branch || "Fıkıh ve Usul",
+      monthlySalary: monthlySalary,
+      minReputation: minRep,
+      minReputationRequired: minRep,
+      gender: gender || this.state.genderMode,
+      isHired: false,
+      pedagogicalPower: 55 + (exp * 9),
+      academicDepth: 60 + (exp * 8) + (ageCat === "pir" ? 10 : 5),
+      prestige: 15 + exp * 15,
+      bio: `Kullanıcı tarafından davet edilen özel müderris. ${prox === 5 ? 'Yurt dışından gelen uluslararası misafir âlim statüsündedir.' : 'Kurum bünyesinde ihtisas halkalarına rehberlik etmektedir.'}`
+    };
+
+    if (!this.state.scholarsMarket || this.state.scholarsMarket.length === 0) {
+      this.state.scholarsMarket = typeof SCHOLARS_DATA !== "undefined" ? JSON.parse(JSON.stringify(SCHOLARS_DATA)) : [];
+    }
+    this.state.scholarsMarket.unshift(scholarObj);
+
+    this.addNotification({
+      title: `🎖️ Hoca Pazarına Eklendi: ${scholarObj.title} ${scholarObj.name}`,
+      message: `${scholarObj.branch} sahasındaki hoca pazara eklendi. (Gereken İtibar: ${minRep}, Maaş: ${monthlySalary.toLocaleString('tr-TR')} ₺/ay)`,
+      type: "success"
+    });
+
+    this.saveToStorage();
+    return scholarObj;
+  }
+
+  // ==================== MÜFREDAT HAVUZUNA DERS EKLEME & 60% KURALI ====================
+  addCustomCourseToPool(courseData) {
+    const all = this.getAllCourses();
+    const newCourse = {
+      id: Date.now(),
+      code: (courseData.code || "ÖZEL-" + (all.length + 1)).trim().toUpperCase(),
+      name: courseData.name.trim(),
+      textbook: (courseData.textbook || courseData.name).trim(),
+      branch: courseData.branch || "Fıkıh ve Usul",
+      category: "islami_ilimler",
+      classYear: courseData.classYear !== undefined ? parseInt(courseData.classYear) : -1,
+      semester: courseData.semester || "guz",
+      weeklyHours: parseInt(courseData.weeklyHours) || 3,
+      credit: 2,
+      difficulty: parseInt(courseData.difficulty) || 3,
+      ottomanLevel: parseInt(courseData.ottomanLevel) || 2,
+      isClassicMethod: true,
+      description: courseData.description || "Kullanıcı tarafından müfredata dahil edilen ihtisas dersi.",
+      impact: { fıkıh: 5, arapcaDil: 4, kelamFelsefe: 2, hadisTefsir: 2, sosyalBilimler: 2, sanatKultur: 0 }
+    };
+
+    if (!this.state.customCurriculum || this.state.customCurriculum.length === 0) {
+      this.state.customCurriculum = typeof COURSES_DATA !== "undefined" ? JSON.parse(JSON.stringify(COURSES_DATA)) : [];
+    }
+    this.state.customCurriculum.push(newCourse);
+
+    this.addNotification({
+      title: `📚 Yeni Seminer Havuzda: [${newCourse.code}] ${newCourse.name}`,
+      message: `Okutulacak Metin: '${newCourse.textbook}'. Ders artık seminer atama masasında mevcuttur.`,
+      type: "success"
+    });
+
+    this.saveToStorage();
+    return newCourse;
+  }
+
+  // Tevâzün Kuralı Kontrolü (Maksimum %60 Branş Sınırı)
+  validateCurriculumBranchCap(targetClassYear, targetBranch, additionalHours = 0) {
+    const all = this.getAllCourses();
+    const yr = parseInt(targetClassYear);
+    if (yr === -1) return { valid: true };
+
+    const classCourses = all.filter(c => c.classYear === yr);
+    let branchHours = additionalHours;
+    let totalHours = additionalHours;
+
+    classCourses.forEach(c => {
+      const h = parseInt(c.weeklyHours) || 3;
+      totalHours += h;
+      if (c.branch === targetBranch) {
+        branchHours += h;
+      }
+    });
+
+    if (totalHours <= 4) return { valid: true, ratio: branchHours / Math.max(1, totalHours) };
+
+    const ratio = branchHours / totalHours;
+    if (ratio > 0.601) {
+      return {
+        valid: false,
+        ratio: ratio,
+        branch: targetBranch,
+        message: `Tevâzün İlkesi: ${targetBranch} dersleri bu sınıf seviyesinin toplam ders saatinin %${Math.round(ratio * 100)}'ini oluşturuyor. Osmanlı medrese nizamında tek bir ilim dalı %60'ı aşamaz.`
+      };
+    }
+    return { valid: true, ratio: ratio };
+  }
+
+  // 3 İdeal Osmanlı Medresesi Senaryosunu Uygulama
+  applyOttomanScenario(scenarioKey) {
+    if (typeof OTTOMAN_SCENARIOS === "undefined" || !OTTOMAN_SCENARIOS[scenarioKey]) {
+      return { success: false, message: "Senaryo bulunamadı." };
+    }
+    const scenario = OTTOMAN_SCENARIOS[scenarioKey];
+
+    if (!this.state.customCurriculum || this.state.customCurriculum.length === 0) {
+      this.state.customCurriculum = typeof COURSES_DATA !== "undefined" ? JSON.parse(JSON.stringify(COURSES_DATA)) : [];
+    }
+
+    // Önce tüm dersleri müfredat dışı yap (-1)
+    this.state.customCurriculum.forEach(c => {
+      c.classYear = -1;
+    });
+
+    // Senaryo derslerini ata
+    Object.keys(scenario.defaultAssignments).forEach(cidStr => {
+      const cid = parseInt(cidStr);
+      const assignment = scenario.defaultAssignments[cid];
+      const targetCourse = this.state.customCurriculum.find(c => c.id === cid);
+      if (targetCourse) {
+        targetCourse.classYear = assignment.classYear;
+        targetCourse.semester = assignment.semester;
+        targetCourse.weeklyHours = assignment.weeklyHours;
+      }
+    });
+
+    this.state.activeOttomanScenario = scenarioKey;
+    this.state.reputation = Math.min(98, this.state.reputation + (scenario.reputationBonus || 8));
+
+    this.addNotification({
+      title: `📜 Osmanlı Medresesi Senaryosu Uygulandı: ${scenario.shortTitle}`,
+      message: `${scenario.name} müfredatı devreye alındı. Kadim eser hiyerarşisi oluşturuldu. Kurum İtibarı +${scenario.reputationBonus || 8}.`,
+      type: "success"
+    });
+
+    this.saveToStorage();
+    return { success: true, scenario };
+  }
+
+  // 4. Sınıf Alan Seçimi (Branşlaşma)
+  setStudentSpecializationField(studentId, fieldName) {
+    const st = this.state.students.find(s => s.id === studentId);
+    if (!st) return false;
+    st.specializationField = fieldName;
+    if (st.currentClassYear === 4) {
+      st.hasAdvancedReadingCircle = true;
+      st.academicCompetence += 6;
+    }
+    this.saveToStorage();
+    return true;
   }
 
   saveToStorage() {
