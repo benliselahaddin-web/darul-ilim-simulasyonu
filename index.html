@@ -85,7 +85,7 @@
               Tedrisat Süresi
             </label>
             <select id="setupDuration" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm bg-slate-50/50">
-              <option value="5" selected>5 Yıl (1 Yıl Hazırlık + 4 Yıl İhtisas ve Sosyal Bilimler)</option>
+              <option value="5" selected>5 Yıl (1 Yıl Hazırlık + 4 Yıl Temel & Sosyal İlimler)</option>
               <option value="4">4 Yıl (Üniversiteyle Birebir Senkronize İlim Halkası)</option>
             </select>
           </div>
@@ -165,128 +165,13 @@
   <!-- ==================== 2. ANA YÖNETİM PANELİ (DASHBOARD) ==================== -->
   <div id="dashboardScreen" class="hidden min-h-screen flex flex-col relative">
 
-    <!-- SOL AÇILIR İDARE MECLİSİ MENÜSÜ (DRAWER & BACKDROP) -->
-    <div id="sidebarBackdrop" onclick="closeSidebarMenu()" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
-    <aside id="sidebarDrawer" class="fixed top-0 left-0 bottom-0 z-50 w-72 md:w-80 bg-white border-r border-slate-200 shadow-2xl flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out">
-      <!-- Sidebar Header -->
-      <div class="p-4 bg-emerald-900 text-white flex justify-between items-center border-b border-emerald-800">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-emerald-800 border border-amber-400/40 text-amber-300 flex items-center justify-center font-bold">
-            <i data-lucide="landmark" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <div class="text-[10px] text-amber-300 uppercase tracking-wider font-semibold">Dârü'l-İlim ve Hikmet</div>
-            <div class="font-bold text-sm font-amiri leading-tight">İdare Meclisi Menüsü</div>
-          </div>
-        </div>
-        <button onclick="closeSidebarMenu()" class="p-1.5 text-emerald-200 hover:text-white rounded-lg hover:bg-emerald-800/60 transition">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <!-- Menü Maddeleri -->
-      <nav class="p-3 space-y-1 flex-1 overflow-y-auto text-xs">
-        <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Tedrisat & Talebe Halkası</div>
-
-        <button onclick="switchTab('students'); closeSidebarMenu();" id="sidebarBtn_students" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
-          <div class="flex items-center gap-2.5">
-            <i data-lucide="graduation-cap" class="w-4 h-4 text-emerald-700"></i>
-            <span>Talebeler & Mülakat</span>
-          </div>
-          <span id="sidebarBadge_students" class="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">0</span>
-        </button>
-
-        <button onclick="switchTab('curriculum'); closeSidebarMenu();" id="sidebarBtn_curriculum" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
-          <div class="flex items-center gap-2.5">
-            <i data-lucide="book-open" class="w-4 h-4 text-emerald-700"></i>
-            <span>Seminerler & Tedrisat</span>
-          </div>
-        </button>
-
-        <button onclick="switchTab('scholars'); closeSidebarMenu();" id="sidebarBtn_scholars" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
-          <div class="flex items-center gap-2.5">
-            <i data-lucide="award" class="w-4 h-4 text-emerald-700"></i>
-            <span>Hoca Kadrosu & Pazar</span>
-          </div>
-        </button>
-
-        <div class="pt-2 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">İdari Yönetim & Teşkilat</div>
-
-        <button onclick="switchTab('staff'); closeSidebarMenu();" id="sidebarBtn_staff" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
-          <div class="flex items-center gap-2.5">
-            <i data-lucide="users" class="w-4 h-4 text-emerald-700"></i>
-            <span>Personel & İdare</span>
-          </div>
-        </button>
-
-        <button onclick="switchTab('accounting'); closeSidebarMenu();" id="sidebarBtn_accounting" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
-          <div class="flex items-center gap-2.5">
-            <i data-lucide="calculator" class="w-4 h-4 text-emerald-700"></i>
-            <span>Bilanço & Muhasebe</span>
-          </div>
-        </button>
-
-        <button onclick="switchTab('dorm'); closeSidebarMenu();" id="sidebarBtn_dorm" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
-          <div class="flex items-center gap-2.5">
-            <i data-lucide="home" class="w-4 h-4 text-emerald-700"></i>
-            <span>Binalar & Talebe Yurdu</span>
-          </div>
-        </button>
-
-        <div class="pt-2 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Vakıf & Dış Münasebetler</div>
-
-        <button onclick="switchTab('donors'); closeSidebarMenu();" id="sidebarBtn_donors" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
-          <div class="flex items-center gap-2.5">
-            <i data-lucide="handshake" class="w-4 h-4 text-emerald-700"></i>
-            <span>40 Hayırsever & Hâmiler</span>
-          </div>
-        </button>
-
-        <button onclick="switchTab('peers'); closeSidebarMenu();" id="sidebarBtn_peers" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
-          <div class="flex items-center gap-2.5">
-            <i data-lucide="scale" class="w-4 h-4 text-emerald-700"></i>
-            <span>Kardeş Kurumlar</span>
-          </div>
-        </button>
-
-        <button onclick="switchTab('stats'); closeSidebarMenu();" id="sidebarBtn_stats" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
-          <div class="flex items-center gap-2.5">
-            <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-700"></i>
-            <span>İstatistikler</span>
-          </div>
-        </button>
-
-        <button onclick="switchTab('graduates'); closeSidebarMenu();" id="sidebarBtn_graduates" class="w-full px-3 py-2.5 rounded-xl font-semibold flex items-center justify-between text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 transition">
-          <div class="flex items-center gap-2.5">
-            <i data-lucide="scroll" class="w-4 h-4 text-emerald-700"></i>
-            <span>Mezunlar & Raporlar</span>
-          </div>
-        </button>
-      </nav>
-
-      <!-- Sidebar Alt Bilgi -->
-      <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs space-y-1.5">
-        <div class="flex justify-between items-center text-[11px]">
-          <span class="text-slate-500 font-semibold">Talebe Uhuvveti:</span>
-          <span id="sidebarSocialCohesion" class="font-bold text-indigo-700">🤝 %55</span>
-        </div>
-        <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-          <div id="sidebarSocialCohesionBar" class="bg-indigo-600 h-full rounded-full transition-all" style="width: 55%"></div>
-        </div>
-      </div>
-    </aside>
-
     <!-- Üst Başlık ve Durum Çubuğu -->
     <header class="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-40 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-3">
-        <!-- Sol: Logo ve Menü Butonu -->
+        <!-- Sol: Logo -->
         <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
           <div class="flex items-center gap-3">
             <img src="assets/images/darul-funun-logo.png" alt="Dâru'l Fünûn" class="h-10 md:h-12 object-contain py-0.5">
-            <button onclick="toggleSidebarMenu()" id="sidebarToggleBtn" class="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl shadow text-xs font-bold flex items-center gap-2 transition border border-amber-400/40" title="İdare Meclisi Menüsünü Aç">
-              <i data-lucide="menu" class="w-4 h-4"></i>
-              <span>Menü</span>
-            </button>
           </div>
 
           <div class="md:hidden flex items-center gap-2">
@@ -329,10 +214,10 @@
 
         <!-- Sağ: Zaman İlerleme, Bildirim ve Google Profil Avatarı (En Sağda) -->
         <div class="flex items-center gap-2">
-          <button onclick="handleAdvanceNextEvent()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg text-xs transition shadow flex items-center gap-1">
+          <button onclick="handleAdvanceNextEvent()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg text-xs transition shadow flex items-center gap-1" title="Bir sonraki takvim hadisesine ilerle">
             <i data-lucide="fast-forward" class="w-3.5 h-3.5"></i> Etkinliğe Git
           </button>
-          <button onclick="handleAdvanceOneMonth()" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs transition shadow">
+          <button onclick="handleAdvanceOneMonth()" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs transition shadow" title="Bir sonraki aya ilerle">
             +1 Ay
           </button>
           <button onclick="toggleNotificationsDrawer()" class="hidden md:flex p-2 text-slate-600 hover:text-emerald-800 rounded-lg border border-slate-200 bg-slate-50" title="Hadiseler & Bildirimler">
@@ -342,6 +227,105 @@
           <div id="authContainerHeader" class="flex items-center ml-1"></div>
         </div>
       </div>
+
+      <!-- ÜST PANELE BİTİŞİK TEK SIRA BÜYÜK PUNTOLU ANA MENÜLER (HIZLI FADE-IN SARKAN LİSTELER) -->
+      <nav class="bg-emerald-950 border-t border-emerald-800 text-white shadow-inner select-none">
+        <div class="max-w-7xl mx-auto px-4 flex items-center justify-around md:justify-start md:gap-14 overflow-x-auto no-scrollbar py-0">
+
+          <!-- 1. TEDRİSAT -->
+          <div class="relative group py-2.5">
+            <button class="flex items-center gap-1.5 text-xs md:text-sm font-black tracking-widest uppercase text-emerald-100 hover:text-amber-300 transition py-1 focus:outline-none">
+              <i data-lucide="book-open" class="w-4 h-4 text-amber-400"></i>
+              <span>TEDRİSAT</span>
+              <i data-lucide="chevron-down" class="w-3 h-3 text-emerald-300 group-hover:rotate-180 transition-transform duration-150"></i>
+            </button>
+            <div class="absolute left-0 top-full pt-1 opacity-0 pointer-events-none invisible group-hover:opacity-100 group-hover:pointer-events-auto group-hover:visible transition-all duration-150 transform group-hover:translate-y-0 translate-y-1 z-50 min-w-[210px]">
+              <div class="bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200 py-1 overflow-hidden">
+                <button onclick="switchTab('students')" class="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-800 font-bold text-xs transition flex items-center gap-2">
+                  <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  <span>Talebeler & Mülakat</span>
+                </button>
+                <button onclick="switchTab('curriculum')" class="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-800 font-bold text-xs transition flex items-center gap-2 border-t border-slate-100">
+                  <i data-lucide="book-marked" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  <span>Seminerler</span>
+                </button>
+                <button onclick="switchTab('scholars')" class="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-800 font-bold text-xs transition flex items-center gap-2 border-t border-slate-100">
+                  <i data-lucide="award" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  <span>Hoca Kadrosu ve Pazar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. İDARİ PERSONEL VE YURT -->
+          <div class="relative group py-2.5">
+            <button class="flex items-center gap-1.5 text-xs md:text-sm font-black tracking-widest uppercase text-emerald-100 hover:text-amber-300 transition py-1 focus:outline-none">
+              <i data-lucide="users" class="w-4 h-4 text-amber-400"></i>
+              <span>İDARİ PERSONEL VE YURT</span>
+              <i data-lucide="chevron-down" class="w-3 h-3 text-emerald-300 group-hover:rotate-180 transition-transform duration-150"></i>
+            </button>
+            <div class="absolute left-0 top-full pt-1 opacity-0 pointer-events-none invisible group-hover:opacity-100 group-hover:pointer-events-auto group-hover:visible transition-all duration-150 transform group-hover:translate-y-0 translate-y-1 z-50 min-w-[200px]">
+              <div class="bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200 py-1 overflow-hidden">
+                <button onclick="switchTab('dorm')" class="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-800 font-bold text-xs transition flex items-center gap-2">
+                  <i data-lucide="home" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  <span>Yurt</span>
+                </button>
+                <button onclick="switchTab('staff')" class="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-800 font-bold text-xs transition flex items-center gap-2 border-t border-slate-100">
+                  <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  <span>İdari Personel</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. MUHASEBE VE VAKIF -->
+          <div class="relative group py-2.5">
+            <button class="flex items-center gap-1.5 text-xs md:text-sm font-black tracking-widest uppercase text-emerald-100 hover:text-amber-300 transition py-1 focus:outline-none">
+              <i data-lucide="coins" class="w-4 h-4 text-amber-400"></i>
+              <span>MUHASEBE VE VAKIF</span>
+              <i data-lucide="chevron-down" class="w-3 h-3 text-emerald-300 group-hover:rotate-180 transition-transform duration-150"></i>
+            </button>
+            <div class="absolute left-0 top-full pt-1 opacity-0 pointer-events-none invisible group-hover:opacity-100 group-hover:pointer-events-auto group-hover:visible transition-all duration-150 transform group-hover:translate-y-0 translate-y-1 z-50 min-w-[210px]">
+              <div class="bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200 py-1 overflow-hidden">
+                <button onclick="switchTab('donors')" class="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-800 font-bold text-xs transition flex items-center gap-2">
+                  <i data-lucide="handshake" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  <span>Hayırseverler</span>
+                </button>
+                <button onclick="switchTab('accounting')" class="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-800 font-bold text-xs transition flex items-center gap-2 border-t border-slate-100">
+                  <i data-lucide="calculator" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  <span>Bilanço ve Muhasebe</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. İSTATİSTİK -->
+          <div class="relative group py-2.5">
+            <button class="flex items-center gap-1.5 text-xs md:text-sm font-black tracking-widest uppercase text-emerald-100 hover:text-amber-300 transition py-1 focus:outline-none">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-amber-400"></i>
+              <span>İSTATİSTİK</span>
+              <i data-lucide="chevron-down" class="w-3 h-3 text-emerald-300 group-hover:rotate-180 transition-transform duration-150"></i>
+            </button>
+            <div class="absolute right-0 md:left-0 top-full pt-1 opacity-0 pointer-events-none invisible group-hover:opacity-100 group-hover:pointer-events-auto group-hover:visible transition-all duration-150 transform group-hover:translate-y-0 translate-y-1 z-50 min-w-[200px]">
+              <div class="bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200 py-1 overflow-hidden">
+                <button onclick="switchTab('stats')" class="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-800 font-bold text-xs transition flex items-center gap-2">
+                  <i data-lucide="pie-chart" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  <span>Genel İstatistikler</span>
+                </button>
+                <button onclick="switchTab('peers')" class="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-800 font-bold text-xs transition flex items-center gap-2 border-t border-slate-100">
+                  <i data-lucide="scale" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  <span>Kardeş Kurumlar</span>
+                </button>
+                <button onclick="switchTab('graduates')" class="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50 hover:text-emerald-800 font-bold text-xs transition flex items-center gap-2 border-t border-slate-100">
+                  <i data-lucide="scroll" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  <span>Raporlar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </nav>
     </header>
 
     <!-- Ana Gövde -->
@@ -377,7 +361,7 @@
               <option value="1">📘 1. Sınıf Takvimi</option>
               <option value="2">📗 2. Sınıf Takvimi</option>
               <option value="3">📙 3. Sınıf Takvimi</option>
-              <option value="4">🌟 4. Sınıf (İhtisas) Takvimi</option>
+              <option value="4">🎓 4. Sınıf Takvimi</option>
             </select>
 
             <!-- Konferans Planla Butonu -->
@@ -464,13 +448,10 @@
       <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-2">
         <span id="candRemainingCount" class="text-xs text-slate-400"></span>
         <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-          <button onclick="handleRejectCandidate()" class="px-3 py-2 bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 text-xs font-semibold rounded-xl transition border border-slate-200">
+          <button onclick="handleRejectCandidate()" class="px-3.5 py-2 bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-700 text-xs font-semibold rounded-xl transition border border-slate-200">
             Adayı Reddet
           </button>
-          <button onclick="handleAcceptCandidate('ihtisas_ileri')" class="px-3 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold rounded-xl shadow transition" title="Hazırlıkta gözleme al, sene sonunda ileri halkaya dahil et">
-            İhtisas Adayı Olarak Al
-          </button>
-          <button onclick="handleAcceptCandidate('standart')" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow transition">
+          <button onclick="handleAcceptCandidate('standart')" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow transition">
             Kuruma Kabul Et
           </button>
         </div>
@@ -570,70 +551,6 @@
     <div id="notificationsList" class="max-h-80 overflow-y-auto divide-y divide-slate-100"></div>
   </div>
 
-  <!-- J) TALEBE İHTİSAS & TEDRİSAT PROGRAMI TASNİF ŞÛRASI MODALI -->
-  <div id="trackSelectionModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="ottoman-card max-w-4xl w-full p-6 md:p-8 rounded-3xl bg-white shadow-2xl border border-purple-300 space-y-5 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-start border-b border-slate-100 pb-3">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-900 flex items-center justify-center text-xl font-bold shadow-sm">
-            🌟
-          </div>
-          <div>
-            <h3 class="text-lg font-bold text-slate-900 font-amiri">Talebe İhtisas Programı Tasnif Şûrası</h3>
-            <p class="text-xs text-slate-500">Hazırlık ve Ara Sınıfları Tamamlayan Talebelerin İhtisas / Normal Tedrisat Yönlendirmesi</p>
-          </div>
-        </div>
-        <button onclick="closeTrackSelectionModal()" class="text-slate-400 hover:text-slate-600 p-1">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <div class="p-3 bg-purple-50/70 rounded-2xl border border-purple-200 text-xs text-purple-950 leading-relaxed flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <strong>Şûra Rehberi:</strong> Yüksek istidat ve akademik başarı gösteren talebeleri <strong>İhtisas Programı</strong>'na tevcih ediniz. İhtisas talebeleri kadim medrese usûlü ileri metinleri ve mütalaa halkalarını takip eder.
-        </div>
-        <div class="flex gap-2">
-          <button onclick="setAllEligibleToIhtisas()" class="px-3 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-xl font-bold text-xs shadow-sm transition whitespace-nowrap">
-            Uygun Olanları (İstidat ≥ 70) İhtisasa Al
-          </button>
-          <button onclick="setAllToNormal()" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-semibold text-xs transition whitespace-nowrap">
-            Tümünü Normal Yap
-          </button>
-        </div>
-      </div>
-
-      <div class="overflow-x-auto border border-slate-200 rounded-2xl max-h-[420px] overflow-y-auto">
-        <table class="w-full text-left border-collapse text-xs">
-          <thead class="bg-slate-50 text-slate-600 uppercase text-[10px] font-semibold sticky top-0 bg-slate-50 z-10">
-            <tr>
-              <th class="py-3 px-4">Talebe Bilgisi</th>
-              <th class="py-3 px-4">Sınıf & Fakülte</th>
-              <th class="py-3 px-4">İstidat & Ahlak</th>
-              <th class="py-3 px-4">Başarı Notu</th>
-              <th class="py-3 px-4">Şûra Tavsiyesi</th>
-              <th class="py-3 px-4 text-center">Tedrisat Tercihi</th>
-            </tr>
-          </thead>
-          <tbody id="trackSelectionTableBody" class="divide-y divide-slate-100">
-            <!-- JS ile doldurulur -->
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3">
-        <div id="trackSelectionSummary" class="text-xs text-slate-600 font-medium"></div>
-        <div class="flex gap-2 w-full sm:w-auto">
-          <button onclick="closeTrackSelectionModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">
-            Vazgeç
-          </button>
-          <button onclick="saveTrackSelection()" class="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center gap-2">
-            <i data-lucide="check" class="w-4 h-4"></i>
-            Tasnifi Onayla ve Yürürlüğe Koy
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- K) ATANAN SEMİNER DÜZENLEME MODALI -->
   <div id="editSeminarModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -759,7 +676,7 @@
             </label>
             <label class="flex items-center gap-1.5 cursor-pointer">
               <input type="checkbox" id="confGrade_4" checked class="conf-grade-cb rounded text-amber-600">
-              <span>4. Sınıf (İhtisas)</span>
+              <span>4. Sınıf</span>
             </label>
           </div>
         </div>

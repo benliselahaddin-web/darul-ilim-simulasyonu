@@ -112,29 +112,19 @@ function toggleSidebarMenu() {
   }
 }
 
-function closeSidebarMenu() {
-  const drawer = document.getElementById("sidebarDrawer");
-  const backdrop = document.getElementById("sidebarBackdrop");
-  if (drawer) drawer.classList.add("-translate-x-full");
-  if (backdrop) backdrop.classList.add("hidden");
-}
+function closeSidebarMenu() {}
+function toggleSidebarMenu() {}
 
-// Sekme Değiştir (Sol açılır meclis menüsünü günceller)
+// Sekme Değiştir (Üst menüden doğrudan ilgili içeriğe geçiş yapar)
 function switchTab(tabName) {
   currentTab = tabName;
-
-  // Sol Açılır Menü Butonları
-  document.querySelectorAll("[id^='sidebarBtn_']").forEach(btn => {
-    btn.classList.remove("bg-emerald-100", "text-emerald-950", "font-bold");
-    btn.classList.add("text-slate-700");
-  });
-  const sideBtn = document.getElementById(`sidebarBtn_${tabName}`);
-  if (sideBtn) {
-    sideBtn.classList.add("bg-emerald-100", "text-emerald-950", "font-bold");
-    sideBtn.classList.remove("text-slate-700");
-  }
-
   renderAll();
+
+  // Seçilen sekmeyi kullanıcı ekranında öne çıkar
+  const container = document.getElementById("tabContentContainer");
+  if (container) {
+    container.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 // Üst Durum Çubuğu
@@ -275,7 +265,9 @@ function renderCalendar() {
     }
 
     html += `
-      <div onclick="handleCalendarDayClick(${d.day}, ${offset}, '${d.event ? d.event.type : ''}')" class="p-1.5 min-h-[68px] rounded-lg border ${dayBg} cursor-pointer hover:shadow-md transition text-xs flex flex-col justify-between relative group">
+      <div onclick="handleCalendarDaySingleClick(${d.day}, ${offset}, '${d.event ? d.event.type : ''}')"
+           ondblclick="handleCalendarDayDoubleClick(${d.day}, ${offset}, '${d.event ? d.event.type : ''}')"
+           class="p-1.5 min-h-[68px] rounded-lg border ${dayBg} cursor-pointer hover:shadow-md transition text-xs flex flex-col justify-between relative group select-none">
         <div class="flex justify-between items-center">
           <span class="font-semibold">${d.day}</span>
           ${dotColor ? `<span class="w-2 h-2 rounded-full ${dotColor}"></span>` : ''}
@@ -300,8 +292,8 @@ function renderCalendar() {
           ` : '')}
         </div>
 
-        <div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-20 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg whitespace-nowrap pointer-events-none">
-          ${d.day} ${d.monthName}: ${dayConfs.length > 0 ? `🎙️ ${dayConfs[0].speaker}` : (d.event ? d.event.title : (d.isAppointmentDay ? '1-e-1 Talebe Görüşme Günü' : 'Tedrisat Günü'))} ${offset === 0 ? '(Güne İlerle / Tıkla)' : ''}
+        <div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-20 px-2.5 py-1 bg-slate-900 text-white text-[10px] rounded-lg shadow-xl whitespace-nowrap pointer-events-none border border-slate-700">
+          ${d.day} ${d.monthName}: ${dayConfs.length > 0 ? `🎙️ ${dayConfs[0].speaker}` : (d.event ? d.event.title : (d.isAppointmentDay ? '1-e-1 Talebe Görüşme Günü' : 'Tedrisat Günü'))} • <span class="text-amber-300 font-bold">(Çift tıkla: Güne İlerle)</span>
         </div>
       </div>
     `;
@@ -401,7 +393,45 @@ function handleToggleCalendarMode() {
   renderCalendar();
 }
 
-function handleCalendarDayClick(day, offset, eventType) {
+// Tek Tıklama: Yalnızca inceleme ve bilgilendirme yapar, GÜN İLERLETMEZ
+function handleCalendarDaySingleClick(day, offset, eventType) {
+  if (offset !== 0) {
+    if (typeof showToastNotification === "function") {
+      showToastNotification("Başka bir ayı inceliyorsunuz. Güncel aya dönmek için 'Mevcut Ay'a basınız.", "info");
+    }
+    return;
+  }
+
+  // Eğer bugünkü gün ise ve bugün bir etkinlik varsa aç
+  if (day === game.state.currentDay) {
+    if (eventType === "dorm_report") {
+      showDormReportModal();
+      return;
+    }
+    if (eventType === "student_meeting") {
+      if (!game.state.studentMeetingData) game.triggerStudentMeeting();
+      renderAll();
+      return;
+    }
+    if (eventType === "admin_meeting") {
+      if (!game.state.adminMeetingData) game.triggerAdministrativeMeeting();
+      renderAll();
+      return;
+    }
+    if (day === 10 || day === 20 || day === 30) {
+      showStudentAppointmentModal();
+      return;
+    }
+  }
+
+  // Gelecek bir güne tek tıklandığında bilgilendir
+  if (day > game.state.currentDay && typeof showToastNotification === "function") {
+    showToastNotification(`📅 ${day} ${MONTH_NAMES[game.state.currentMonthIndex]} gününe ilerlemek için kutucuğa ÇİFT TIKLAYINIZ.`, "info");
+  }
+}
+
+// Çift Tıklama: Güne ilerler (Arada etkinlik varsa x. günde durur, dönem şartı sağlanmadıysa engeller)
+function handleCalendarDayDoubleClick(day, offset, eventType) {
   if (offset !== 0) {
     alert("Başka bir ayı inceliyorsunuz. Gün ilerletmek ve hadiseleri açmak için 'Mevcut Ay'a dönünüz.");
     game.resetViewingMonthOffset();
@@ -409,57 +439,116 @@ function handleCalendarDayClick(day, offset, eventType) {
     return;
   }
 
-  // Özel etkinliklere takvim üzerinden doğrudan tıklanabilme
-  if (eventType === "track_selection" || (day === 16 && game.state.currentMonthIndex === 0)) {
-    openTrackSelectionModal();
-    return;
-  }
-  if (eventType === "dorm_report") {
-    showDormReportModal();
-    return;
-  }
-  if (eventType === "student_meeting") {
-    if (!game.state.studentMeetingData) game.triggerStudentMeeting();
-    renderAll();
-    return;
-  }
-  if (eventType === "admin_meeting") {
-    if (!game.state.adminMeetingData) game.triggerAdministrativeMeeting();
-    renderAll();
-    return;
-  }
-  if (eventType === "orientation") {
-    alert(`24-28 Ağustos Oryantasyon Haftası Hadisesi:\n${day} Ağustos Programı: Talebeler ile idare ve hocalar bir araya gelerek medrese usûlü ve kütüphane rehberliği icra etmektedir.`);
-    return;
-  }
-
-  // 10, 20 veya 30. günlerde Birebir Hasbihal Modalı
-  if (day === 10 || day === 20 || day === 30) {
-    showStudentAppointmentModal();
+  // Geçmiş veya bugünkü gün
+  if (day <= game.state.currentDay) {
+    if (eventType === "dorm_report") {
+      showDormReportModal();
+      return;
+    }
+    if (eventType === "student_meeting") {
+      if (!game.state.studentMeetingData) game.triggerStudentMeeting();
+      renderAll();
+      return;
+    }
+    if (eventType === "admin_meeting") {
+      if (!game.state.adminMeetingData) game.triggerAdministrativeMeeting();
+      renderAll();
+      return;
+    }
+    if (day === 10 || day === 20 || day === 30) {
+      showStudentAppointmentModal();
+      return;
+    }
     return;
   }
 
-  // Güne ilerle
-  if (day > game.state.currentDay) {
-    const diff = day - game.state.currentDay;
-    game.advanceDays(diff);
-    renderAll();
+  // 1. Bugünkü tamamlanmamış bir hadise varsa ilerleyemez
+  if (game.hasUncompletedEventToday && game.hasUncompletedEventToday()) {
+    alert(`Ayın ${game.state.currentDay}. günündeki hadiseyi veya toplantıyı tamamlamadan bir sonraki güne geçemezsiniz!`);
+    return;
   }
+
+  // 2. Dönem başlama şartları (ders-hoca eşleşmesi ve öğrenci kabulleri)
+  if (!game.checkTermCanStart()) {
+    alert(game.termStartBlockReason || "Dönem başlaması için ders-hoca eşleştirmesi ve öğrenci kabulleri tamamlanmalıdır.");
+    if (game.termStartBlockReason && game.termStartBlockReason.includes("hocası")) {
+      switchTab("curriculum");
+    } else {
+      switchTab("students");
+    }
+    return;
+  }
+
+  // 3. Adım adım ilerlet (aradaki herhangi bir günde etkinlik varsa x. günde durur)
+  const diff = day - game.state.currentDay;
+  const res = game.advanceDays(diff);
+  if (res && res.blocked) {
+    alert(res.reason);
+  }
+  renderAll();
 }
 
 function handleAdvanceOneDay() {
-  game.advanceDays(1);
+  if (game.hasUncompletedEventToday && game.hasUncompletedEventToday()) {
+    alert(`Ayın ${game.state.currentDay}. günündeki hadiseyi tamamlamadan sonraki güne geçemezsiniz.`);
+    return;
+  }
+  if (!game.checkTermCanStart()) {
+    alert(game.termStartBlockReason || "Dönem başlaması için ders-hoca eşleştirmesi ve öğrenci kabulleri tamamlanmalıdır.");
+    if (game.termStartBlockReason && game.termStartBlockReason.includes("hocası")) {
+      switchTab("curriculum");
+    } else {
+      switchTab("students");
+    }
+    return;
+  }
+  const res = game.advanceDays(1);
+  if (res && res.blocked) {
+    alert(res.reason);
+  }
   renderAll();
 }
 
 function handleAdvanceNextEvent() {
-  game.jumpToNextEvent();
+  if (game.hasUncompletedEventToday && game.hasUncompletedEventToday()) {
+    alert(`Ayın ${game.state.currentDay}. günündeki hadiseyi tamamlamadan ilerleyemezsiniz.`);
+    return;
+  }
+  if (!game.checkTermCanStart()) {
+    alert(game.termStartBlockReason || "Dönem başlatılamaz! Lütfen ders-hoca eşleşmesini ve talebe kabulünü tamamlayınız.");
+    if (game.termStartBlockReason && game.termStartBlockReason.includes("hocası")) {
+      switchTab("curriculum");
+    } else {
+      switchTab("students");
+    }
+    return;
+  }
+  const res = game.jumpToNextEvent();
+  if (res && res.blocked) {
+    alert(res.reason);
+  }
   renderAll();
 }
 
 function handleAdvanceOneMonth() {
+  if (game.hasUncompletedEventToday && game.hasUncompletedEventToday()) {
+    alert(`Ayın ${game.state.currentDay}. günündeki hadiseyi tamamlamadan ayı ilerletemezsiniz.`);
+    return;
+  }
+  if (!game.checkTermCanStart()) {
+    alert(game.termStartBlockReason || "Dönem başlatılamaz! Lütfen ders-hoca eşleşmesini ve talebe kabulünü tamamlayınız.");
+    if (game.termStartBlockReason && game.termStartBlockReason.includes("hocası")) {
+      switchTab("curriculum");
+    } else {
+      switchTab("students");
+    }
+    return;
+  }
   const remaining = 31 - game.state.currentDay;
-  game.advanceDays(remaining);
+  const res = game.advanceDays(remaining);
+  if (res && res.blocked) {
+    alert(res.reason);
+  }
   renderAll();
 }
 
@@ -532,8 +621,6 @@ function renderStudentsTab() {
 
   // Kayıtlı Talebeler Filtreleme
   let filteredStudents = activeStudents.filter(st => {
-    if (studentFilterTrack === "ihtisas" && st.track !== "ihtisas" && st.track !== "ihtisas_ileri") return false;
-    if (studentFilterTrack === "normal" && (st.track === "ihtisas" || st.track === "ihtisas_ileri")) return false;
     if (studentFilterGano === "sub3" && st.gano !== null && st.gano >= 3.00) return false;
     if (studentFilterGano === "sub25" && st.gano !== null && st.gano >= 2.50) return false;
     if (studentFilterClass !== "all" && st.currentClassYear.toString() !== studentFilterClass) return false;
@@ -577,10 +664,6 @@ function renderStudentsTab() {
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <button onclick="openTrackSelectionModal()" class="px-3.5 py-2.5 bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-2">
-            <i data-lucide="sparkles"></i>
-            İhtisas Tasnif Şûrası (${activeStudents.filter(s => s.currentClassYear >= 1).length} Talebe)
-          </button>
           ${quotaRemaining > 0 && s.candidatesPool.length > 0 ? `
             <button onclick="handleAutoFillQuota()" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-2">
               <i data-lucide="sparkles"></i>
@@ -721,16 +804,6 @@ function renderStudentsTab() {
 
           <!-- Filtreler -->
           <div class="flex flex-wrap items-center gap-2 text-xs">
-            <!-- Program / İhtisas Filtresi -->
-            <div class="flex items-center gap-1.5">
-              <span class="text-slate-500 font-medium">Program:</span>
-              <select onchange="studentFilterTrack = this.value; renderStudentsTab();" class="filter-input px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white">
-                <option value="all" ${studentFilterTrack === 'all' ? 'selected' : ''}>Tüm Talebeler</option>
-                <option value="ihtisas" ${studentFilterTrack === 'ihtisas' ? 'selected' : ''}>🌟 İhtisas Programı</option>
-                <option value="normal" ${studentFilterTrack === 'normal' ? 'selected' : ''}>📘 Normal Tedrisat</option>
-              </select>
-            </div>
-
             <!-- Sınıf Filtresi -->
             <div class="flex items-center gap-1.5">
               <span class="text-slate-500 font-medium">Sınıf:</span>
@@ -811,22 +884,13 @@ function renderStudentsTab() {
                           <tr class="hover:bg-slate-50 transition">
                             <td class="py-3 px-4">
                               <div class="font-bold text-slate-900">${st.fullName}</div>
-                              <div class="flex items-center gap-1.5 mt-0.5">
-                                ${(st.track === 'ihtisas' || st.track === 'ihtisas_ileri') ? `
-                                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-300">
-                                    🌟 İhtisas
-                                  </span>
-                                ` : `
-                                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                                    Normal Tedrisat
-                                  </span>
-                                `}
-                                ${(st.disciplineRecord && st.disciplineRecord.length > 0) ? `
+                              ${(st.disciplineRecord && st.disciplineRecord.length > 0) ? `
+                                <div class="mt-0.5">
                                   <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-300" title="Disiplin Tutanağı Mevcut">
                                     ⚠️ Tutanak (${st.disciplineRecord.length})
                                   </span>
-                                ` : ''}
-                              </div>
+                                </div>
+                              ` : ''}
                             </td>
                             <td class="py-3 px-4">
                               <div class="font-medium text-slate-800">${st.faculty}</div>
@@ -859,9 +923,6 @@ function renderStudentsTab() {
                             </td>
                             <td class="py-3 px-4 text-right">
                               <div class="inline-flex items-center gap-1">
-                                <button onclick="toggleSingleStudentTrack('${st.id}')" class="px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 rounded text-[10px] font-semibold transition" title="Programı Değiştir (İhtisas / Normal)">
-                                  ${(st.track === 'ihtisas' || st.track === 'ihtisas_ileri') ? 'Normale Al' : 'İhtisasa Al'}
-                                </button>
                                 <button onclick="showStudentDetailModal('${st.id}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[10px] font-semibold transition" title="Aylık Rapor ve Dosya">
                                   Dosya
                                 </button>
@@ -993,9 +1054,17 @@ function renderCurriculumTab() {
                 '<strong>🔓 Görevlendirme Dönemi Açık:</strong> Dönem başındasınız. Kadronuzdaki hocaları derslere görevlendirebilir veya değiştirebilirsiniz.'}
             </span>
           </div>
-          <span class="text-[11px] font-bold">
-            ${assignedCount} / ${yearCourses.length} Ders Hocalı
-          </span>
+          <div class="flex items-center gap-2">
+            ${unassignedCount > 0 && !isLocked ? `
+              <button onclick="handleAutoAssignScholars()" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs shadow-sm transition flex items-center gap-1.5" title="Mevcut hocaları derslere otomatik ata">
+                <i data-lucide="wand-2" class="w-3.5 h-3.5"></i>
+                <span>Hocaları Otomatik Eşleştir</span>
+              </button>
+            ` : ''}
+            <span class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white/90 border border-slate-200">
+              ${assignedCount} / ${yearCourses.length} Ders Hocalı
+            </span>
+          </div>
         </div>
       </div>
 
@@ -1312,8 +1381,8 @@ function renderCourseCard(course, isLocked) {
   const assignedScholarId = s.courseAssignments[course.id];
   const assignedScholar = s.hiredScholars.find(h => h.scholarId === assignedScholarId);
 
-  // Bu branşta kadromuzda derse girebilecek hocalar
-  const eligibleScholars = s.hiredScholars.filter(h => {
+  // Bu branşta kadromuzda derse girebilecek hocalar (bulunamazsa tüm hocalar seçilebilir)
+  let eligibleScholars = s.hiredScholars.filter(h => {
     if (course.branch === "Klasik Arapça") {
       return h.specialty === "Klasik Arapça" || h.branch === "klasikArapca";
     }
@@ -1322,6 +1391,9 @@ function renderCourseCard(course, isLocked) {
     }
     return h.specialty === course.branch;
   });
+  if (eligibleScholars.length === 0) {
+    eligibleScholars = s.hiredScholars;
+  }
 
   return `
     <div class="ottoman-card p-4 rounded-xl border flex flex-col justify-between ${!assignedScholar ? 'border-red-300 bg-red-50/20' : 'bg-white'}">
@@ -1412,6 +1484,19 @@ function handleAssignCourse(courseId) {
 function handleUnassignCourse(courseId) {
   const res = game.unassignScholarFromCourse(courseId);
   if (!res.success) alert(res.message);
+  renderAll();
+}
+
+function handleAutoAssignScholars() {
+  if (!game.state.hiredScholars || game.state.hiredScholars.length === 0) {
+    alert("Kadronuzda henüz hoca bulunmuyor. Önce 'TEDRİSAT > Hoca Kadrosu ve Pazar' menüsünden hoca transfer ediniz.");
+    switchTab("scholars");
+    return;
+  }
+  const count = game.autoAssignScholarsToCourses();
+  if (typeof showToastNotification === "function") {
+    showToastNotification(`✓ ${count} ders kadronuzdaki hocalara otomatik olarak dağıtıldı.`, "success");
+  }
   renderAll();
 }
 
@@ -4004,147 +4089,7 @@ function saveEditedSeminar() {
   }
 }
 
-// ==================== TALEBE İHTİSAS & TEDRİSAT PROGRAMI TASNİF ŞÛRASI ====================
-let currentTrackSelections = {};
-
-function openTrackSelectionModal() {
-  const modal = document.getElementById("trackSelectionModal");
-  if (!modal) return;
-
-  const eligibleStudents = game.state.students.filter(s => s.status === "active" && s.currentClassYear >= 1);
-  const allActive = game.state.students.filter(s => s.status === "active");
-
-  if (allActive.length === 0) {
-    alert("Kurumda henüz kayıtlı talebe bulunmamaktadır. Önce mülakatla talebe kabul ediniz.");
-    return;
-  }
-
-  const list = eligibleStudents.length > 0 ? eligibleStudents : allActive;
-
-  currentTrackSelections = {};
-  list.forEach(st => {
-    currentTrackSelections[st.id] = (st.track === "ihtisas" || st.track === "ihtisas_ileri") ? "ihtisas" : "normal";
-  });
-
-  renderTrackSelectionRows(list);
-  modal.classList.remove("hidden");
-  if (window.lucide) window.lucide.createIcons();
-}
-
-function closeTrackSelectionModal() {
-  document.getElementById("trackSelectionModal").classList.add("hidden");
-}
-
-function renderTrackSelectionRows(list) {
-  const tableBody = document.getElementById("trackSelectionTableBody");
-  const summaryEl = document.getElementById("trackSelectionSummary");
-  if (!tableBody) return;
-
-  let ihtisasCount = 0;
-  let normalCount = 0;
-
-  tableBody.innerHTML = list.map(st => {
-    const isIhtisas = currentTrackSelections[st.id] === "ihtisas";
-    if (isIhtisas) ihtisasCount++; else normalCount++;
-
-    const isRecommended = st.talent >= 70 || (st.internalScore && st.internalScore >= 80) || (st.gano && st.gano >= 3.30);
-    const yrLabel = st.currentClassYear === 0 ? "Hazırlık Sınıfı" : `${st.currentClassYear}. Sınıf`;
-
-    return `
-      <tr class="hover:bg-slate-50 transition">
-        <td class="py-3 px-4">
-          <div class="font-bold text-slate-900">${st.fullName}</div>
-          <div class="text-[10px] text-slate-500">${st.primaryField.toUpperCase()} • Memleket: ${st.city || 'İstanbul'}</div>
-        </td>
-        <td class="py-3 px-4">
-          <div class="font-semibold text-slate-800">${yrLabel}</div>
-          <div class="text-[10px] text-slate-400 truncate max-w-[180px]">${st.faculty}</div>
-        </td>
-        <td class="py-3 px-4">
-          <div class="font-bold text-emerald-800">İstidat: %${st.talent}</div>
-          <div class="text-[10px] text-slate-500">Ahlak: ${st.moralStatus}</div>
-        </td>
-        <td class="py-3 px-4">
-          ${st.gano !== null ? `
-            <div class="font-bold text-slate-900">GANO: ${st.gano.toFixed(2)}</div>
-            <div class="text-[10px] text-slate-400">Tedrisat: ${st.internalScore}/100</div>
-          ` : `
-            <div class="font-bold text-indigo-700">Hazırlık Sınavı: ${st.internalScore} / 100</div>
-          `}
-        </td>
-        <td class="py-3 px-4">
-          ${isRecommended ? `
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-300">
-              ⭐ İhtisasa Uygun
-            </span>
-          ` : `
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-              Normal Tedrisat
-            </span>
-          `}
-        </td>
-        <td class="py-3 px-4 text-center">
-          <div class="inline-flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs">
-            <button type="button" onclick="setStudentTrackChoice('${st.id}', 'normal')" class="px-2.5 py-1 rounded-lg font-bold transition ${!isIhtisas ? 'bg-white text-slate-800 shadow' : 'text-slate-400 hover:text-slate-700'}">
-              📘 Normal
-            </button>
-            <button type="button" onclick="setStudentTrackChoice('${st.id}', 'ihtisas')" class="px-2.5 py-1 rounded-lg font-bold transition ${isIhtisas ? 'bg-purple-700 text-white shadow' : 'text-slate-400 hover:text-purple-700'}">
-              🌟 İhtisas
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  if (summaryEl) {
-    summaryEl.innerHTML = `Toplam <strong>${list.length}</strong> Talebe: <span class="text-purple-800 font-bold">${ihtisasCount} İhtisas Programında</span> • <span class="text-slate-700 font-bold">${normalCount} Normal Tedrisatta</span>`;
-  }
-}
-
-function setStudentTrackChoice(studentId, track) {
-  currentTrackSelections[studentId] = track;
-  const eligibleStudents = game.state.students.filter(s => s.status === "active" && s.currentClassYear >= 1);
-  const list = eligibleStudents.length > 0 ? eligibleStudents : game.state.students.filter(s => s.status === "active");
-  renderTrackSelectionRows(list);
-}
-
-function setAllEligibleToIhtisas() {
-  const eligibleStudents = game.state.students.filter(s => s.status === "active" && s.currentClassYear >= 1);
-  const list = eligibleStudents.length > 0 ? eligibleStudents : game.state.students.filter(s => s.status === "active");
-  list.forEach(st => {
-    const isRecommended = st.talent >= 70 || (st.internalScore && st.internalScore >= 80) || (st.gano && st.gano >= 3.30);
-    currentTrackSelections[st.id] = isRecommended ? "ihtisas" : "normal";
-  });
-  renderTrackSelectionRows(list);
-}
-
-function setAllToNormal() {
-  Object.keys(currentTrackSelections).forEach(id => {
-    currentTrackSelections[id] = "normal";
-  });
-  const eligibleStudents = game.state.students.filter(s => s.status === "active" && s.currentClassYear >= 1);
-  const list = eligibleStudents.length > 0 ? eligibleStudents : game.state.students.filter(s => s.status === "active");
-  renderTrackSelectionRows(list);
-}
-
-function saveTrackSelection() {
-  game.batchUpdateStudentTracks(currentTrackSelections);
-  closeTrackSelectionModal();
-  renderAll();
-  if (typeof showToastNotification === "function") {
-    showToastNotification("Talebe ihtisas ve tedrisat halkası tasnifi başarıyla kaydedildi.", "success");
-  }
-}
-
-function toggleSingleStudentTrack(studentId) {
-  const st = game.state.students.find(s => s.id === studentId);
-  if (!st) return;
-  const current = (st.track === "ihtisas" || st.track === "ihtisas_ileri") ? "ihtisas" : "normal";
-  const newTrack = current === "ihtisas" ? "normal" : "ihtisas";
-  game.updateStudentTrack(studentId, newTrack);
-  renderAll();
-  if (typeof showToastNotification === "function") {
-    showToastNotification(`${st.fullName} ${newTrack === 'ihtisas' ? '🌟 İhtisas Programına' : '📘 Normal Tedrisata'} geçirildi.`, "info");
-  }
-}
+// İhtisas kısmı kaldırıldı - Tüm öğrenciler standart tedrisat kategorisinde eğitim görür
+function openTrackSelectionModal() {}
+function closeTrackSelectionModal() {}
+function toggleSingleStudentTrack() {}

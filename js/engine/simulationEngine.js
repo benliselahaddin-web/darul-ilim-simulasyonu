@@ -271,7 +271,7 @@ class DarulIlimGame {
         if (targetMonthIndex === 0) {
           if (d === 1) event = { title: "Aday Mülakatları Başlar", type: "interview" };
           if (d === 15) event = { title: "Mülakat Değerlendirme Komisyonu", type: "interview" };
-          if (d === 16) event = { title: "Talebe İhtisas Programı Tasnif Şûrası", type: "track_selection" };
+          if (d === 16) event = { title: "Güz Dönemi Ders & Seminer Kayıtları", type: "academic" };
           if (d === 24) event = { title: "Oryantasyon: Açılış Konferansı & Mütevelli Hasbihali", type: "orientation" };
           if (d === 25) event = { title: "Oryantasyon: Kütüphane & İlim Usûlü Semineri", type: "orientation" };
           if (d === 26) event = { title: "Oryantasyon: Tarihî Yarımada & Medreseler Gezisi", type: "orientation" };
@@ -316,7 +316,7 @@ class DarulIlimGame {
         // MAYIS (Month 9): Bahar Finalleri & Sene Sonu Heyeti
         if (targetMonthIndex === 9) {
           if (d === 20) event = { title: "Bahar Finalleri & Sene Sonu İdari Heyeti", type: "admin_meeting" };
-          if (d === 28) event = { title: "Hazırlık Gözlemi & İhtisas Ayrımı", type: "track" };
+          if (d === 28) event = { title: "Hazırlık Sınıfı Yıl Sonu Mütalaası", type: "academic" };
         }
         // HAZİRAN (Month 10): Yaz Kampı
         if (targetMonthIndex === 10) {
@@ -331,7 +331,7 @@ class DarulIlimGame {
         // ==================== ÖĞRENCİ TEDRİSAT & TATİL TAKVİMİ ====================
         if (targetMonthIndex === 0) {
           if (d >= 1 && d <= 15) event = { title: "Talebe Yaz İzni & Memleket Dönüşü", type: "holiday" };
-          if (d === 16) event = { title: "İhtisas ve Tedrisat Halkaları Belirlenmesi", type: "track_selection" };
+          if (d === 16) event = { title: "Güz Dönemi Ders Kayıtları", type: "academic" };
           if (d >= 17 && d <= 23) event = { title: "Talebe Yaz İzni & Memleket Dönüşü", type: "holiday" };
           if (d === 24) event = { title: "Oryantasyon: Açılış & Mütevelli Hasbihali", type: "orientation" };
           if (d === 25) event = { title: "Oryantasyon: Kütüphane & İlim Usûlü Semineri", type: "orientation" };
@@ -407,36 +407,158 @@ class DarulIlimGame {
     this.saveToStorage();
   }
 
-  // Gün İlerletme
+  // Günlük açık/tamamlanmamış hadise kontrolü
+  hasUncompletedEventToday() {
+    if (this.state.activeModalEvent) return true;
+    if (this.state.adminMeetingData) return true;
+    if (this.state.studentMeetingData) return true;
+    if (this.state.pendingAnnualStipendModal) return true;
+    return false;
+  }
+
+  // Dönem Başı Kontrolü: Ders-Hoca eşleşmesi ve öğrencilerin ders almaya başlaması
+  checkTermCanStart() {
+    // Ağustos'un ilk yarısında (Aday Mülakatları dönemi 1-14. günler) kullanıcı serbestçe gün ilerletebilir
+    if (this.state.currentMonthIndex === 0 && this.state.currentDay < 15) {
+      return true;
+    }
+
+    const activeStudents = this.state.students.filter(s => s.status === "active");
+    if (activeStudents.length === 0) {
+      this.termStartBlockReason = "⚠️ Dönem Başlatılamaz: Kuruma henüz talebe kabul edilmemiştir! Lütfen 'TEDRİSAT > Talebeler & Mülakat' menüsünden mülakatları icra ederek kontenjanı doldurunuz.";
+      return false;
+    }
+
+    // Aktif sınıflar
+    const activeYears = Array.from(new Set(activeStudents.map(s => s.currentClassYear !== undefined ? s.currentClassYear : 0)));
+    const allCourses = this.getAllCourses();
+    const currentSemester = (this.state.currentMonthIndex >= 1 && this.state.currentMonthIndex <= 5) ? "guz" : ((this.state.currentMonthIndex >= 6 && this.state.currentMonthIndex <= 10) ? "bahar" : "guz");
+
+    // Aktif sınıfların mevcut dönem dersleri
+    const requiredCourses = allCourses.filter(c => activeYears.includes(c.classYear) && (c.semester === currentSemester || !c.semester));
+    const unassigned = requiredCourses.filter(c => !this.state.courseAssignments[c.id]);
+
+    if (unassigned.length > 0) {
+      const sampleNames = unassigned.slice(0, 3).map(c => c.name).join(", ");
+      this.termStartBlockReason = `⚠️ Dönem Başlatılamaz: Aktif sınıflar için ${unassigned.length} dersin hocası henüz atanmamıştır (${sampleNames}${unassigned.length > 3 ? '...' : ''})! Lütfen 'TEDRİSAT > Seminerler > Sınıf & Hoca Masası'ndan derslere hoca görevlendiriniz.`;
+      return false;
+    }
+
+    // Öğrencilerin dersleri almaya başlaması
+    activeStudents.forEach(st => {
+      const stCourses = requiredCourses.filter(c => c.classYear === (st.currentClassYear || 0));
+      st.enrolledCourses = stCourses.map(c => c.id);
+    });
+
+    this.termStartBlockReason = null;
+    return true;
+  }
+
+  // Hoca-Ders Otomatik Eşleştirme Yardımcısı
+  autoAssignScholarsToCourses() {
+    const allCourses = this.getAllCourses();
+    const scholars = this.state.hiredScholars || [];
+    if (scholars.length === 0) return 0;
+    let count = 0;
+
+    allCourses.forEach(c => {
+      if (!this.state.courseAssignments[c.id]) {
+        // Branşa göre eşleşen hoca bul veya sırayla ata
+        const match = scholars.find(s => s.specialty === c.branch || s.branch === c.branch) || scholars[count % scholars.length];
+        if (match) {
+          this.state.courseAssignments[c.id] = match.scholarId;
+          count++;
+        }
+      }
+    });
+
+    this.saveToStorage();
+    return count;
+  }
+
+  // Gün İlerletme (Kural: x. günde etkinlik varsa x+1'e o etkinlik tamamlanmadan geçilemez)
   advanceDays(step = 1) {
+    if (step <= 0) return { success: true, advanced: 0 };
+
+    // 1. Bugünkü tamamlanmamış bir hadise varsa bugünden çıkılamaz
+    if (this.hasUncompletedEventToday()) {
+      return {
+        success: false,
+        blocked: true,
+        reason: `Bugünkü (${this.state.currentDay} ${MONTH_NAMES[this.state.currentMonthIndex]}) hadiseyi/istişareyi tamamlamadan sonraki güne geçemezsiniz!`
+      };
+    }
+
+    // 2. Dönem başlangıç şartları (ders-hoca eşleşmesi ve öğrenci kabulleri)
+    if (!this.checkTermCanStart()) {
+      return {
+        success: false,
+        blocked: true,
+        reason: this.termStartBlockReason
+      };
+    }
+
+    let advanced = 0;
     for (let i = 0; i < step; i++) {
+      // Bir gün ilerle
       this.state.currentDay++;
       this.state.totalDaysPassed++;
+      advanced++;
 
-      // Günlük hadise ve randevu kontrolleri
+      // Günlük hadise kontrollerini çalıştır
       this.checkDailyEvents();
 
+      // Takvimde bugün bir etkinlik veya konferans var mı?
+      const days = this.getMonthDays(0);
+      const dayObj = days.find(d => d.day === this.state.currentDay);
+      const hasConf = (this.state.scheduledConferences || []).some(
+        c => !c.completed && c.monthIndex === this.state.currentMonthIndex && c.day === this.state.currentDay
+      );
+      const hasCalendarEvent = dayObj && dayObj.event;
+
+      // Eğer ay sonu ise ayı devret ve 1. günde dur
       if (this.state.currentDay > 30) {
         this.state.currentDay = 1;
         this.advanceMonth();
+        break;
+      }
+
+      // Eğer bugünde bir etkinlik tetiklendiyse veya takvim etkinliği/konferans varsa, x. günde DUR!
+      // Kullanıcı bu etkinliği görmeli/tamamlamalı, x+1'e atlayamamalı.
+      if (this.hasUncompletedEventToday() || hasCalendarEvent || hasConf) {
+        break;
       }
     }
+
     this.resetViewingMonthOffset();
     this.saveToStorage();
+    return { success: true, advanced };
   }
 
-  // Bir sonraki takvim olayına atla
+  // Bir sonraki takvim olayına atla (asla bir etkinliği atlayıp sonrakine geçmez)
   jumpToNextEvent() {
-    const days = this.getMonthDays(0);
-    const futureEvents = days.filter(d => d.day > this.state.currentDay && d.event);
-    if (futureEvents.length > 0) {
-      const targetDay = futureEvents[0].day;
-      const diff = targetDay - this.state.currentDay;
-      this.advanceDays(diff);
-    } else {
-      const remaining = 31 - this.state.currentDay;
-      this.advanceDays(remaining);
+    if (this.hasUncompletedEventToday()) {
+      return {
+        success: false,
+        blocked: true,
+        reason: `Ayın ${this.state.currentDay}. günündeki hadiseyi tamamlamadan bir sonraki etkinliğe geçemezsiniz.`
+      };
     }
+
+    if (!this.checkTermCanStart()) {
+      return {
+        success: false,
+        blocked: true,
+        reason: this.termStartBlockReason
+      };
+    }
+
+    const days = this.getMonthDays(0);
+    // Gelecekteki etkinlikler
+    const futureEvents = days.filter(d => d.day > this.state.currentDay && (d.event || d.isAppointmentDay));
+    const targetDay = futureEvents.length > 0 ? futureEvents[0].day : (this.state.currentDay < 30 ? 30 : 31);
+    const diff = targetDay - this.state.currentDay;
+    return this.advanceDays(diff);
   }
 
   // Ay Geçişi ve Bilanço Hesaplamaları
@@ -771,28 +893,6 @@ class DarulIlimGame {
       this.triggerAdministrativeMeeting();
     }
 
-    // 5. İkinci Senenin Başında (Ağustos 16): Mülakatın 1 Gün Sonrası İhtisas Tasnif Şûrası
-    if (this.state.currentMonthIndex === 0 && this.state.currentDay === 16 && this.state.academicYear >= 2) {
-      const eligibleStudents = this.state.students.filter(s => s.status === "active" && s.currentClassYear >= 1);
-      if (eligibleStudents.length > 0 && !this.state.hasDoneTrackSelectionThisYear && !this.state.activeModalEvent) {
-        this.state.activeModalEvent = {
-          type: "track_selection",
-          title: "🌟 Talebe İhtisas Programı Tasnif Şûrası",
-          message: `${this.state.academicYear}. Akademik Yıl mülakatları tamamlandı. Hazırlık ve ara sınıfları başarıyla tamamlayan ${eligibleStudents.length} talebenin istidat ve başarılarına göre İhtisas Halkası ve Normal Tedrisat ayrımını yapmak üzere heyet toplandı.`,
-          options: [
-            {
-              label: "Tasnif Şûrası Masasını Aç ve Talebeleri Belirle",
-              action: () => {
-                this.state.activeModalEvent = null;
-                if (typeof openTrackSelectionModal === "function") {
-                  openTrackSelectionModal();
-                }
-              }
-            }
-          ]
-        };
-      }
-    }
 
     // 6. Planlanan Konferans Kontrolü
     if (this.state.scheduledConferences && this.state.scheduledConferences.length > 0) {
@@ -2249,6 +2349,13 @@ class DarulIlimGame {
       const data = localStorage.getItem("darul_ilim_savegame_v2");
       if (data) {
         this.state = JSON.parse(data);
+        // İhtisas kaldırıldı: Tüm öğrenciler normal kategoride eğitime devam eder
+        if (this.state && Array.isArray(this.state.students)) {
+          this.state.students.forEach(st => {
+            st.track = "normal";
+          });
+        }
+
         // Beyoğlu Anadolu İHL tayfası geriye dönük uyumluluk güvencesi (erkek modu için en az 2 talebe)
         if (this.state && this.state.genderMode !== "female" && Array.isArray(this.state.students)) {
           const beyogluCount = this.state.students.filter(
