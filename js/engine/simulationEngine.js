@@ -1036,6 +1036,33 @@ class DarulIlimGame {
     const handledCount = monthlyIncidents.filter(i => i.isHandled).length;
     const pendingCount = monthlyIncidents.filter(i => !i.isHandled).length;
 
+    // Beyoğlu Anadolu İHL Mezunlar Ekibi / Klik İncelemesi
+    const beyogluStudents = active.filter(s => s.highSchool && s.highSchool.includes("Beyoğlu"));
+    let beyogluReport = null;
+    if (this.state.genderMode !== "female" && beyogluStudents.length >= 2) {
+      const complaintsPool = [
+        "Yurda son giriş saati olan 23:00'ı düzenli olarak ihlal ediyorlar; topluca dışarıda vakit geçirip geç saatlerde geliyorlar.",
+        "Diğer liselerden gelen akranlarıyla kaynaşmayıp sadece kendi aralarında gruplaşıyorlar. Çay ocağı ve terası adeta kendi kontrollerine almış durumdalar.",
+        "Gece geç saatlerde etüt salonu mutfağında gizlice toplanıp menemen ve semaver çayı yapıyorlar; nöbetçi belletmenin uyarılarına karşı birlik olup itiraz ediyorlar.",
+        "Sabah etütlerine ve ilk derslere birbirlerini bekledikleri için 4-5 kişi birden toplu gecikmeyle giriyorlar.",
+        "Hafta sonları idareden resmi izin kağıdı doldurmadan topluca gezi ve kamplara gidip akşam yoklamasında eksik çıkıyorlar.",
+        "Farklı katlara dağıtılan odalarını gizlice birleştirip ranza ve dolapları taşıyarak müstakil koğuş kurma teşebbüsünde bulundular."
+      ];
+      const pickedComplaint = complaintsPool[(this.state.currentMonthIndex + this.state.academicYear) % complaintsPool.length];
+      beyogluReport = {
+        count: beyogluStudents.length,
+        names: beyogluStudents.map(s => s.fullName).join(", "),
+        complaint: pickedComplaint,
+        urgency: "Dikkat Edilmeli",
+        note: `Beyoğlu Anadolu İHL mezunu ${beyogluStudents.length} talebe kurumda güçlü ve bağımsız bir klik/tayfa oluşturmuş vaziyette. Ayrışmayı önlemek için ortak sorumluluklar verilmeli veya oda tertipleri karma hale getirilmelidir.`
+      };
+    }
+
+    let summaryText = `${ym.name} arz ediyor: "Yurdumuzda uhuvvet seviyemiz %${this.state.socialCohesion || 55} düzeyindedir. Ay boyunca meydana gelen ${monthlyIncidents.length} hadisenin ${handledCount} tanesi idaremizce çözüme kavuşturulmuştur."`;
+    if (beyogluReport) {
+      summaryText += ` (Özel Not: Beyoğlu AİHL mezunlar ekibinin ${beyogluStudents.length} talebelik grubuyla ilgili disiplin ve intizam şikayetleri raporda sunulmuştur.)`;
+    }
+
     return {
       managerName: ym.name,
       managerTitle: ym.title,
@@ -1047,11 +1074,12 @@ class DarulIlimGame {
       dormBalance: dormBalance,
       eventsHeld: eventsHeld,
       problemStudents: problemStudents,
+      beyogluReport: beyogluReport,
       monthlyIncidents: monthlyIncidents,
       handledCount: handledCount,
       pendingCount: pendingCount,
       maintenanceProposal: this.state.pendingDormMaintenanceProposal,
-      summary: `${ym.name} arz ediyor: "Yurdumuzda uhuvvet seviyemiz %${this.state.socialCohesion || 55} düzeyindedir. Ay boyunca meydana gelen ${monthlyIncidents.length} hadisenin ${handledCount} tanesi idaremizce çözüme kavuşturulmuştur."`
+      summary: summaryText
     };
   }
 
@@ -1573,7 +1601,7 @@ class DarulIlimGame {
     };
   }
 
-  // Kalan Kontenjanı İstidada Göre Otomatik Doldur
+  // Kalan Kontenjanı İstidada Göre Otomatik Doldur (Beyoğlu İHL ekibi önceliğiyle)
   autoFillRemainingQuota() {
     const quota = this.getAnnualQuota();
     const activeThisYear = this.state.students.filter(
@@ -1588,7 +1616,24 @@ class DarulIlimGame {
       return scoreB - scoreA;
     });
 
-    const toAdmit = sorted.slice(0, needed);
+    let toAdmit = [];
+    if (this.state.genderMode !== "female") {
+      const alreadyAdmittedBeyoglu = activeThisYear.filter(
+        s => s.highSchool && s.highSchool.includes("Beyoğlu")
+      ).length;
+      const neededBeyoglu = Math.max(0, 2 - alreadyAdmittedBeyoglu);
+
+      const beyogluPool = sorted.filter(c => c.highSchool && c.highSchool.includes("Beyoğlu"));
+      const nonBeyogluPool = sorted.filter(c => !c.highSchool || !c.highSchool.includes("Beyoğlu"));
+
+      const pickedBeyoglu = beyogluPool.slice(0, Math.min(needed, neededBeyoglu));
+      const remainingNeeded = needed - pickedBeyoglu.length;
+      const rest = [...beyogluPool.slice(pickedBeyoglu.length), ...nonBeyogluPool].slice(0, remainingNeeded);
+      toAdmit = [...pickedBeyoglu, ...rest];
+    } else {
+      toAdmit = sorted.slice(0, needed);
+    }
+
     toAdmit.forEach(c => {
       c.status = "active";
       this.state.students.push(c);
@@ -1798,10 +1843,25 @@ class DarulIlimGame {
     if (!this.state.resolvedIncidentsHistory) this.state.resolvedIncidentsHistory = [];
     if (!this.state.monthlyDormIncidentsLog) this.state.monthlyDormIncidentsLog = [];
 
+    const active = this.state.students.filter(s => s.status === "active");
+
     // Tekrara düşmemek için bu dönem henüz çıkmamış bir arıza seç
-    const available = DORM_INCIDENTS_CATALOG.filter(inc => !this.state.resolvedIncidentsHistory.includes(inc.id));
-    const pool = available.length > 0 ? available : DORM_INCIDENTS_CATALOG;
-    const incident = pool[Math.floor(Math.random() * pool.length)];
+    let available = DORM_INCIDENTS_CATALOG.filter(inc => !this.state.resolvedIncidentsHistory.includes(inc.id));
+    if (available.length === 0) available = [...DORM_INCIDENTS_CATALOG];
+
+    // Hanımefendiler modunda Beyoğlu İHL hadiselerini hariç tut
+    if (this.state.genderMode === "female") {
+      available = available.filter(inc => !inc.isBeyogluIncident);
+    } else {
+      // Erkek modunda ve en az 2 Beyoğlu talebesi varsa, Beyoğlu ekibi vakalarına %35 ağırlık ver
+      const beyogluActive = active.filter(s => s.highSchool && s.highSchool.includes("Beyoğlu"));
+      if (beyogluActive.length >= 2 && Math.random() < 0.35) {
+        const beyogluOnly = available.filter(inc => inc.isBeyogluIncident);
+        if (beyogluOnly.length > 0) available = beyogluOnly;
+      }
+    }
+
+    const incident = available[Math.floor(Math.random() * available.length)];
 
     this.state.resolvedIncidentsHistory.push(incident.id);
     if (this.state.resolvedIncidentsHistory.length > 45) {
@@ -1820,9 +1880,16 @@ class DarulIlimGame {
 
     // Eğer hadise kural ihlali veya yüz kızartıcı bir suç ise talebe dosyasına ANINDA işlenir
     let involvedStudent = null;
-    const active = this.state.students.filter(s => s.status === "active");
     if (incident.isDisciplinary && active.length > 0) {
-      involvedStudent = active[Math.floor(Math.random() * active.length)];
+      if (incident.isBeyogluIncident) {
+        const beyogluActive = active.filter(s => s.highSchool && s.highSchool.includes("Beyoğlu"));
+        involvedStudent = beyogluActive.length > 0
+          ? beyogluActive[Math.floor(Math.random() * beyogluActive.length)]
+          : active[Math.floor(Math.random() * active.length)];
+      } else {
+        involvedStudent = active[Math.floor(Math.random() * active.length)];
+      }
+
       if (!involvedStudent.disciplineRecord) involvedStudent.disciplineRecord = [];
 
       involvedStudent.disciplineRecord.unshift({
@@ -2182,6 +2249,20 @@ class DarulIlimGame {
       const data = localStorage.getItem("darul_ilim_savegame_v2");
       if (data) {
         this.state = JSON.parse(data);
+        // Beyoğlu Anadolu İHL tayfası geriye dönük uyumluluk güvencesi (erkek modu için en az 2 talebe)
+        if (this.state && this.state.genderMode !== "female" && Array.isArray(this.state.students)) {
+          const beyogluCount = this.state.students.filter(
+            s => s.status === "active" && s.highSchool && s.highSchool.includes("Beyoğlu")
+          ).length;
+          if (beyogluCount < 2) {
+            const activeBoys = this.state.students.filter(s => s.status === "active");
+            for (let i = 0; i < Math.min(activeBoys.length, 2 - beyogluCount); i++) {
+              activeBoys[i].highSchool = "Beyoğlu Anadolu İmam Hatip Lisesi";
+              activeBoys[i].highSchoolTier = "prestij";
+              activeBoys[i].isBeyogluCrew = true;
+            }
+          }
+        }
         return true;
       }
     } catch (e) {

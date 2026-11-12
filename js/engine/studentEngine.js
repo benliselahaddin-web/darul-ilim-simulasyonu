@@ -337,11 +337,26 @@ function generateStudentCandidate(id, year, gender = "male", admissionCriteria =
 }
 
 // 75 Adaylık bir başvuru havuzu oluşturur (Yalnızca İstanbul üniversiteleri)
+// Beyoğlu Anadolu İmam Hatip Lisesi'nden her sene minimum 2 öğrenci kabulü için havuza öncelikli eklenir
 function generateAnnualCandidates(year, gender = "male", criteria = {}) {
   const poolSize = 75;
   const candidates = [];
   for (let i = 1; i <= poolSize; i++) {
-    candidates.push(generateStudentCandidate(i, year, gender, criteria));
+    const cand = generateStudentCandidate(i, year, gender, criteria);
+
+    // Beyoğlu Anadolu İHL mezunları (her sene minimum 2-4 aday en yüksek istidatla havuza gelir)
+    if (i <= 5 && gender === "male") {
+      cand.highSchool = "Beyoğlu Anadolu İmam Hatip Lisesi";
+      cand.highSchoolTier = "prestij";
+      cand.city = "İstanbul";
+      cand.isBeyogluCrew = true;
+      cand.talent = Math.floor(Math.random() * 12) + 84; // 84-95 arası yüksek istidat
+      cand.interviewScore = Math.floor(Math.random() * 10) + 86;
+      cand.yksRank = Math.floor(Math.random() * 600) + 90; // Yüksek derece
+      cand.faculty = cand.isTheology ? "İlahiyat Fakültesi (Arapça Hazırlıklı)" : cand.faculty;
+    }
+
+    candidates.push(cand);
   }
   return candidates;
 }

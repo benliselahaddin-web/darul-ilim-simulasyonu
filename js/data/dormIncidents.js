@@ -473,6 +473,92 @@ const DORM_INCIDENTS_CATALOG = [
     moralImpact: -32,
     stressDelta: 18,
     cohesionDelta: -10
+  },
+
+  // ==================== 4. BEYOĞLU ANADOLU İMAM HATİP TAYFASI ÖZEL VAKALARI ====================
+  {
+    id: "inc_beyoglu_01",
+    category: "disciplinary",
+    isBeyogluIncident: true,
+    title: "Beyoğlu İHL Ekibi Son Giriş Saatini Aşıp Gece Geç Geldi",
+    desc: "Beyoğlu mezunu talebeler akşam dışarı çıkıp son giriş saati olan 23:00'ı aştılar. Belletmenin aramalarına cevap vermeyip 00:30 sularında yangın merdiveninden içeri sızmaya çalışırken yakalandılar.",
+    repairCost: 0,
+    severity: 3,
+    isDisciplinary: true,
+    recordTitle: "Beyoğlu Ekibi Toplu Gece Giriş İhlali ve Güvenlik Talimatına Aykırılık",
+    moralImpact: -14,
+    stressDelta: 10,
+    cohesionDelta: -4
+  },
+  {
+    id: "inc_beyoglu_02",
+    category: "disciplinary",
+    isBeyogluIncident: true,
+    title: "Beyoğlu Ekibinin Kendi Arasında Gruplaşması ve Ortak Alanı İşgal Etmesi",
+    desc: "Beyoğlu İHL mezunu talebeler diğer liselerden gelen akranlarıyla kaynaşmayıp çay ocağı ve dinlenme salonunun en ferah köşesini yalnızca kendi aralarında kapattılar. Diğer talebeler hizipleşmeden şikayetçi oldu.",
+    repairCost: 0,
+    severity: 2,
+    isDisciplinary: true,
+    recordTitle: "Yurtta Ayrışma, Gruplaşma ve Ortak Kullanım Alanında İnhisar Kurma",
+    moralImpact: -10,
+    stressDelta: 8,
+    cohesionDelta: -6
+  },
+  {
+    id: "inc_beyoglu_03",
+    category: "disciplinary",
+    isBeyogluIncident: true,
+    title: "Beyoğlu Tayfasının Gece Yarısı Mutfakta Gizlice Menemen Yapması ve Yangın Alarmı",
+    desc: "Gece saat 02:15'te Beyoğlu ekibi etüt mutfağında gizlice sucuklu menemen ve semaver çayı yaparken havalandırmayı açmayı unuttu; duman sensörünün çalmasıyla tüm yurt yatağından fırladı.",
+    repairCost: 1500,
+    severity: 3,
+    isDisciplinary: true,
+    recordTitle: "Gece Mutfağa İzinsiz Girme ve Yangın Alarmını Tetikleme",
+    moralImpact: -12,
+    stressDelta: 12,
+    cohesionDelta: -3
+  },
+  {
+    id: "inc_beyoglu_04",
+    category: "disciplinary",
+    isBeyogluIncident: true,
+    title: "Beyoğlu Ekibinin Sabah Seminerine Toplu Halde Geç Kalması",
+    desc: "Gece geç saate kadar kendi odalarında hasbihal edip birbirlerini sabah namazından sonra uyandırmayan Beyoğlu mezunu talebeler, sabahki ilk tedrisat dersine 5 kişi birden 25 dakika gecikmeyle girdi.",
+    repairCost: 0,
+    severity: 3,
+    isDisciplinary: true,
+    recordTitle: "Ders İntizamını Toplu Halde Aksamaya Uğratma",
+    moralImpact: -10,
+    stressDelta: 7,
+    cohesionDelta: -2
+  },
+  {
+    id: "inc_beyoglu_05",
+    category: "disciplinary",
+    isBeyogluIncident: true,
+    title: "Beyoğlu Mezunlarının Hafta Sonu İdareye Haber Vermeden Kampa Gitmesi",
+    desc: "Beyoğlu İHL mezunları hafta sonu izin kağıdı doldurmadan topluca Belgrad Ormanı'na doğa yürüyüşüne çıktılar. Akşam yoklamasında 4 talebe birden eksik çıkınca yurt müdürü teyakkuza geçti.",
+    repairCost: 0,
+    severity: 4,
+    isDisciplinary: true,
+    recordTitle: "İdareden İzinsiz ve Habersiz Toplu Gezi Düzenleme",
+    moralImpact: -18,
+    stressDelta: 14,
+    cohesionDelta: -5
+  },
+  {
+    id: "inc_beyoglu_06",
+    category: "disciplinary",
+    isBeyogluIncident: true,
+    title: "Beyoğlu Ekibinin Yurt Odalarını Birleştirip Kendi Bağımsız Koğuşunu Kurma Girişimi",
+    desc: "Farklı katlara dağıtılan Beyoğlu talebeleri, hafta sonu idareye sormadan ranza ve dolapları taşıyarak 2. kattaki odayı tamamen 'Beyoğlu Odası' haline getirmeye çalışırken yakalandı.",
+    repairCost: 0,
+    severity: 3,
+    isDisciplinary: true,
+    recordTitle: "İdareden İzinsiz Oda ve Eşya Düzenini Değiştirme Teşebbüsü",
+    moralImpact: -12,
+    stressDelta: 9,
+    cohesionDelta: -4
   }
 ];
 

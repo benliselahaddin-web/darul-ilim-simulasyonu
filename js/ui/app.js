@@ -119,21 +119,9 @@ function closeSidebarMenu() {
   if (backdrop) backdrop.classList.add("hidden");
 }
 
-// Sekme Değiştir (Hem üst sekme çubuğunu hem de sol menüyü günceller)
+// Sekme Değiştir (Sol açılır meclis menüsünü günceller)
 function switchTab(tabName) {
   currentTab = tabName;
-
-  // Üst Sekmeler
-  document.querySelectorAll(".tab-btn").forEach(btn => {
-    btn.classList.remove("border-emerald-700", "text-emerald-800", "font-bold", "bg-emerald-50");
-    btn.classList.add("border-transparent", "text-slate-600");
-  });
-
-  const activeBtn = document.getElementById(`tabBtn_${tabName}`);
-  if (activeBtn) {
-    activeBtn.classList.remove("border-transparent", "text-slate-600");
-    activeBtn.classList.add("border-emerald-700", "text-emerald-800", "font-bold", "bg-emerald-50");
-  }
 
   // Sol Açılır Menü Butonları
   document.querySelectorAll("[id^='sidebarBtn_']").forEach(btn => {
@@ -152,18 +140,25 @@ function switchTab(tabName) {
 // Üst Durum Çubuğu
 function renderHeader() {
   const s = game.state;
-  document.getElementById("headerInstName").innerText = s.institutionName;
-  document.getElementById("headerAcademicYear").innerText = `${s.academicYear}. Akademik Yıl`;
-  document.getElementById("headerDate").innerText = `${s.currentDay} ${MONTH_NAMES[s.currentMonthIndex]}`;
+  const instNameEl = document.getElementById("headerInstName");
+  if (instNameEl) instNameEl.innerText = s.institutionName;
+  const acadYearEl = document.getElementById("headerAcademicYear");
+  if (acadYearEl) acadYearEl.innerText = `${s.academicYear}. Akademik Yıl`;
+  const dateEl = document.getElementById("headerDate");
+  if (dateEl) dateEl.innerText = `${s.currentDay} ${MONTH_NAMES[s.currentMonthIndex]}`;
 
   // Kasa
   const budgetEl = document.getElementById("headerBudget");
-  budgetEl.innerText = `${s.budget.toLocaleString('tr-TR')} ₺`;
-  budgetEl.className = s.budget < 0 ? "text-red-600 font-bold" : "text-emerald-700 font-bold";
+  if (budgetEl) {
+    budgetEl.innerText = `${s.budget.toLocaleString('tr-TR')} ₺`;
+    budgetEl.className = s.budget < 0 ? "text-red-600 font-bold" : "text-emerald-700 font-bold";
+  }
 
   // İtibar
-  document.getElementById("headerReputation").innerText = `${s.reputation} / 100`;
-  document.getElementById("headerReputationGain").innerText = `(Bu Yıl: +${s.reputationGainedThisYear})`;
+  const repEl = document.getElementById("headerReputation");
+  if (repEl) repEl.innerText = `${s.reputation} / 100`;
+  const repGainEl = document.getElementById("headerReputationGain");
+  if (repGainEl) repGainEl.innerText = `(Bu Yıl: +${s.reputationGainedThisYear})`;
 
   // Uhuvvet & Sosyallik Düzeyi
   const cohesion = s.socialCohesion || 55;
@@ -177,36 +172,42 @@ function renderHeader() {
   // Aktif Talebe / Yıllık Kontenjan
   const activeCount = s.students.filter(st => st.status === "active").length;
   const quota = game.getAnnualQuota();
-  document.getElementById("headerStudentCount").innerText = `${activeCount} / ${quota} Talebe`;
+  const stCountEl = document.getElementById("headerStudentCount");
+  if (stCountEl) stCountEl.innerText = `${activeCount} / ${quota} Talebe`;
   const sideBadgeSt = document.getElementById("sidebarBadge_students");
   if (sideBadgeSt) sideBadgeSt.innerText = activeCount;
 
   // Aylık Burs
-  document.getElementById("headerStipend").innerText = `${s.currentYearStipend.toLocaleString('tr-TR')} ₺ / ay`;
+  const stipendEl = document.getElementById("headerStipend");
+  if (stipendEl) stipendEl.innerText = `${s.currentYearStipend.toLocaleString('tr-TR')} ₺ / ay`;
 
-  // Cinsiyet Rozeti
+  // Cinsiyet Rozeti (Varsa)
   const genderBadge = document.getElementById("headerGenderBadge");
-  if (s.genderMode === "female") {
-    genderBadge.className = "px-2 py-0.5 rounded text-xs font-semibold bg-pink-100 text-pink-800 border border-pink-300";
-    genderBadge.innerText = "Hanımefendiler Tedrisatı";
-  } else {
-    genderBadge.className = "px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300";
-    genderBadge.innerText = "Beyefendiler Tedrisatı";
+  if (genderBadge) {
+    if (s.genderMode === "female") {
+      genderBadge.className = "px-2 py-0.5 rounded text-xs font-semibold bg-pink-100 text-pink-800 border border-pink-300";
+      genderBadge.innerText = "Hanımefendiler Tedrisatı";
+    } else {
+      genderBadge.className = "px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300";
+      genderBadge.innerText = "Beyefendiler Tedrisatı";
+    }
   }
 
-  // Bina Rozeti
+  // Bina Rozeti (Varsa)
   const buildingBadge = document.getElementById("headerBuildingBadge");
-  let bldgName = "Kiralık Bina";
-  if (typeof INSTITUTION_BUILDINGS_DATA !== "undefined") {
-    const b = INSTITUTION_BUILDINGS_DATA.find(x => x.id === s.currentBuildingId);
-    if (b) bldgName = b.name;
-  }
-  if (s.isBuildingAllocated || s.monthlyRent === 0) {
-    buildingBadge.className = "px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300";
-    buildingBadge.innerText = `Tahsisli (Kira: 0 ₺) • ${bldgName.split('—')[0]}`;
-  } else {
-    buildingBadge.className = "px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300";
-    buildingBadge.innerText = `Kiralık (${s.monthlyRent.toLocaleString('tr-TR')} ₺/ay) • ${bldgName.split('—')[0]}`;
+  if (buildingBadge) {
+    let bldgName = "Kiralık Bina";
+    if (typeof INSTITUTION_BUILDINGS_DATA !== "undefined") {
+      const b = INSTITUTION_BUILDINGS_DATA.find(x => x.id === s.currentBuildingId);
+      if (b) bldgName = b.name;
+    }
+    if (s.isBuildingAllocated || s.monthlyRent === 0) {
+      buildingBadge.className = "px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300";
+      buildingBadge.innerText = `Tahsisli (Kira: 0 ₺) • ${bldgName.split('—')[0]}`;
+    } else {
+      buildingBadge.className = "px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300";
+      buildingBadge.innerText = `Kiralık (${s.monthlyRent.toLocaleString('tr-TR')} ₺/ay) • ${bldgName.split('—')[0]}`;
+    }
   }
 }
 
@@ -3384,10 +3385,31 @@ function showDormReportModal() {
         </div>
       </div>
 
+      ${report.beyogluReport ? `
+        <div class="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-300 text-xs shadow-sm">
+          <div class="flex items-center gap-2 text-amber-900 font-bold mb-1.5">
+            <span class="w-6 h-6 rounded-lg bg-amber-600 text-white flex items-center justify-center text-[11px] font-bold">B</span>
+            <span class="text-sm font-amiri font-bold">Beyoğlu Anadolu İHL Mezunlar Ekibi / Klik İncelemesi (${report.beyogluReport.count} Talebe)</span>
+          </div>
+          <div class="bg-white/80 p-2.5 rounded-lg border border-amber-200 text-slate-800 space-y-1.5 mb-2">
+            <div class="text-[11px] font-semibold text-amber-950 flex items-start gap-1.5">
+              <span class="text-amber-600">⚠️</span>
+              <span><strong>Müdürlük Zabtı & Şikayet:</strong> ${report.beyogluReport.complaint}</span>
+            </div>
+            <div class="text-[10px] text-slate-600 italic">
+              <strong>Ekip Üyeleri:</strong> ${report.beyogluReport.names}
+            </div>
+          </div>
+          <div class="text-[10px] text-amber-900 bg-amber-100/70 px-2.5 py-1.5 rounded-md font-medium">
+            <strong>Rehberlik Tavsiyesi:</strong> ${report.beyogluReport.note}
+          </div>
+        </div>
+      ` : ''}
+
       <div>
         <h4 class="font-bold text-xs text-slate-800 mb-2">Dikkat Çeken / Rehberlik Gerektiren Talebeler</h4>
         <div class="space-y-1.5">
-          ${report.problemStudents.map(ps => `
+          ${report.problemStudents.length === 0 ? '<div class="text-xs text-slate-400 italic">Bu ay dikkat çeken talebe kaydı bulunmamaktadır.</div>' : report.problemStudents.map(ps => `
             <div class="p-2 bg-red-50/50 rounded-lg border border-red-200 text-xs flex justify-between items-center">
               <div>
                 <span class="font-bold text-slate-900">${ps.fullName} (${ps.classYear})</span>

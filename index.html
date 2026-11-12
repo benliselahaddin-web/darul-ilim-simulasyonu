@@ -279,29 +279,14 @@
     <!-- Üst Başlık ve Durum Çubuğu -->
     <header class="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-40 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-3">
-        <!-- Sol: Menü Butonu, Logo ve Kurum Bilgisi -->
+        <!-- Sol: Logo ve Menü Butonu -->
         <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
-          <button onclick="toggleSidebarMenu()" id="sidebarToggleBtn" class="px-3 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl shadow text-xs font-bold flex items-center gap-2 transition border border-amber-400/40" title="İdare Meclisi Menüsünü Aç">
-            <i data-lucide="menu" class="w-4 h-4"></i>
-            <span>Menü</span>
-          </button>
-
-          <div class="flex items-center gap-2.5">
-            <div class="w-10 h-10 rounded-xl bg-emerald-800 text-amber-400 flex items-center justify-center font-bold text-lg shadow border border-amber-500/30">
-              <i data-lucide="landmark" class="w-5 h-5"></i>
-            </div>
-            <div>
-              <h1 id="headerInstName" class="font-bold text-slate-900 text-sm md:text-base font-amiri leading-tight">
-                Dârü'l-İlim Akademisi
-              </h1>
-              <div class="flex items-center gap-2 text-[11px] text-slate-500">
-                <span id="headerAcademicYear" class="font-semibold text-emerald-800">1. Akademik Yıl</span>
-                <span>•</span>
-                <span id="headerDate" class="text-slate-700">1 Ağustos</span>
-                <span id="headerGenderBadge"></span>
-                <span id="headerBuildingBadge"></span>
-              </div>
-            </div>
+          <div class="flex items-center gap-3">
+            <img src="assets/images/darul-funun-logo.png" alt="Dâru'l Fünûn" class="h-10 md:h-12 object-contain py-0.5">
+            <button onclick="toggleSidebarMenu()" id="sidebarToggleBtn" class="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl shadow text-xs font-bold flex items-center gap-2 transition border border-amber-400/40" title="İdare Meclisi Menüsünü Aç">
+              <i data-lucide="menu" class="w-4 h-4"></i>
+              <span>Menü</span>
+            </button>
           </div>
 
           <div class="md:hidden flex items-center gap-2">
@@ -342,23 +327,19 @@
           </div>
         </div>
 
-        <!-- Sağ: Google Auth, Zaman İlerleme ve Bildirim -->
+        <!-- Sağ: Zaman İlerleme, Bildirim ve Google Profil Avatarı (En Sağda) -->
         <div class="flex items-center gap-2">
-          <!-- Google ile Giriş & Kullanıcı Profili -->
-          <div id="authContainerHeader" class="flex items-center"></div>
-
-          <button onclick="handleAdvanceOneDay()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-lg text-xs transition border border-slate-300 flex items-center gap-1">
-            <i data-lucide="play" class="w-3.5 h-3.5"></i> +1 Gün
-          </button>
           <button onclick="handleAdvanceNextEvent()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-lg text-xs transition shadow flex items-center gap-1">
             <i data-lucide="fast-forward" class="w-3.5 h-3.5"></i> Etkinliğe Git
           </button>
           <button onclick="handleAdvanceOneMonth()" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs transition shadow">
             +1 Ay
           </button>
-          <button onclick="toggleNotificationsDrawer()" class="hidden md:flex p-2 text-slate-600 hover:text-emerald-800 rounded-lg border border-slate-200 bg-slate-50">
+          <button onclick="toggleNotificationsDrawer()" class="hidden md:flex p-2 text-slate-600 hover:text-emerald-800 rounded-lg border border-slate-200 bg-slate-50" title="Hadiseler & Bildirimler">
             <i data-lucide="bell" class="w-4 h-4"></i>
           </button>
+          <!-- Google Auth Profil Alanı (Yalnızca Profil Fotoğrafı - En Sağda) -->
+          <div id="authContainerHeader" class="flex items-center ml-1"></div>
         </div>
       </div>
     </header>
@@ -366,9 +347,9 @@
     <!-- Ana Gövde -->
     <main class="max-w-7xl mx-auto px-4 py-6 w-full flex-1 space-y-6">
 
-      <!-- 1 AYLIK İNTERAKTİF TAKVİM BİLEŞENİ (ÖNCEKİ / SONRAKİ AY GEZİNTİSİ & İDARE / ÖĞRENCİ TAKVİMİ SEÇİMİ) -->
-      <section class="ottoman-card p-5 rounded-2xl border bg-white/95 shadow-sm">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
+      <!-- 1 AYLIK İNTERAKTİF TAKVİM BİLEŞENİ -->
+      <section class="ottoman-card p-5 rounded-2xl border bg-white/95 shadow-sm space-y-3">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div class="flex flex-wrap items-center gap-3">
             <h3 id="calendarMonthTitle" class="font-bold text-slate-900 text-sm md:text-base font-amiri flex items-center gap-2">
               <i data-lucide="calendar" class="text-emerald-700 w-4 h-4"></i>
@@ -405,7 +386,7 @@
               <span>Konferans Planla</span>
             </button>
 
-            <!-- Takvim Görünümü Toggle: İdare Takvimi vs Öğrenci Tedrisat & Tatil Takvimi -->
+            <!-- Takvim Görünümü Toggle -->
             <button onclick="handleToggleCalendarMode()" id="calModeBtn" class="px-3 py-1 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold transition flex items-center gap-1.5 shadow-sm">
               <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-700"></i>
               <span id="calModeLabel">[İdare Takvimi]</span>
@@ -413,53 +394,18 @@
           </div>
         </div>
 
-            <div class="flex items-center gap-3 text-[11px]">
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> Bugün</span>
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Hadise / İmtihan</span>
-            </div>
-          </div>
+        <div class="flex items-center gap-3 text-[11px] text-slate-600 pt-1">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> Bugün</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Hadise / İmtihan</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Konferans</span>
         </div>
 
-        <div id="calendarGrid" class="calendar-grid">
+        <div id="calendarGrid" class="calendar-grid pt-2">
           <!-- JS ile doldurulur -->
         </div>
       </section>
 
-      <!-- SEKMELER MENÜSÜ (10 SEKME) -->
-      <div class="border-b border-slate-200 flex flex-wrap gap-1 text-xs md:text-sm">
-        <button onclick="switchTab('students')" id="tabBtn_students" class="tab-btn px-4 py-3 border-b-2 font-bold border-emerald-700 text-emerald-800 bg-emerald-50 rounded-t-xl transition flex items-center gap-2">
-          <i data-lucide="graduation-cap" class="w-4 h-4"></i> Talebeler & Mülakat
-        </button>
-        <button onclick="switchTab('curriculum')" id="tabBtn_curriculum" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
-          <i data-lucide="book-open" class="w-4 h-4"></i> Seminerler
-        </button>
-        <button onclick="switchTab('scholars')" id="tabBtn_scholars" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
-          <i data-lucide="award" class="w-4 h-4"></i> Hoca Kadrosu & Pazar
-        </button>
-        <button onclick="switchTab('staff')" id="tabBtn_staff" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
-          <i data-lucide="users" class="w-4 h-4"></i> Personel & İdare
-        </button>
-        <button onclick="switchTab('accounting')" id="tabBtn_accounting" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
-          <i data-lucide="calculator" class="w-4 h-4"></i> Bilanço & Muhasebe
-        </button>
-        <button onclick="switchTab('dorm')" id="tabBtn_dorm" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
-          <i data-lucide="home" class="w-4 h-4"></i> Binalar & Talebe Yurdu
-        </button>
-        <button onclick="switchTab('donors')" id="tabBtn_donors" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
-          <i data-lucide="handshake" class="w-4 h-4"></i> 40 Hayırsever
-        </button>
-        <button onclick="switchTab('peers')" id="tabBtn_peers" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
-          <i data-lucide="scale" class="w-4 h-4"></i> Kardeş Kurumlar
-        </button>
-        <button onclick="switchTab('stats')" id="tabBtn_stats" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
-          <i data-lucide="bar-chart-3" class="w-4 h-4"></i> İstatistikler
-        </button>
-        <button onclick="switchTab('graduates')" id="tabBtn_graduates" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-600 hover:text-emerald-800 rounded-t-xl transition flex items-center gap-2">
-          <i data-lucide="scroll" class="w-4 h-4"></i> Mezunlar & Raporlar
-        </button>
-      </div>
-
-      <!-- SEKME İÇERİĞİ -->
+      <!-- SEKME İÇERİĞİ (Ana ekrandaki yatay butonlar kaldırıldı, yalnızca sol açılır menüden seçilir) -->
       <div id="tabContentContainer" class="pb-12">
         <!-- JS ile çizilir -->
       </div>
