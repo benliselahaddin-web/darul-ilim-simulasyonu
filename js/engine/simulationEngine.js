@@ -67,7 +67,7 @@ class DarulIlimGame {
       // Kurum Metrikleri
       reputation: 35, // 35 İLE BAŞLAR
       reputationGainedThisYear: 0, // Senede min 2, ortalama 3, max 5 artar
-      budget: 650000, // 650.000 ₺ Başlangıç Kasası
+      budget: 280000, // 280.000 ₺ Başlangıç Kasası (Dengeli ve gerçekçi modern vakıf bütçesi)
       socialCohesion: 55, // Öğrenciler Arası Uhuvvet ve Sosyallik Düzeyi (%0 - %100)
 
       // Planlanan Konferanslar
@@ -80,16 +80,21 @@ class DarulIlimGame {
       activeOttomanScenario: null,
       scholarsMarket: [],
 
+      // Rastgele Vakıf Gündemi ve Yönetim Kurulu Olay Kartları (Modern Türkiye Gerçekleri)
+      activeVakifEvent: null,
+      lastVakifEventOutcome: null,
+      vakifEventHistory: [],
+
       // Kurum & Yurt Binası Pazarı Durumu
       currentBuildingId: "bldg_1_fatih", // 1. Seviye Fatih Kiralık Eski Bina
       isBuildingAllocated: false,        // Tahsis edilirse kira = 0 ₺
       allocatedByDonorId: null,
-      monthlyRent: 42000,                // bldg_1_fatih kirası
+      monthlyRent: 55000,                // bldg_1_fatih güncel dengeli kirası
 
-      currentDormId: "dorm_lvl_1",       // 1. Seviye Yurt (35 Yatak, 20.000 ₺/ay)
+      currentDormId: "dorm_lvl_1",       // 1. Seviye Yurt (35 Yatak, 58.000 ₺/ay)
 
-      // Sabit Düzenli Esnaf Bağışı (Aylık EN AZ 400.000 ₺)
-      localMerchantsDonationThisMonth: 420000,
+      // Sabit Düzenli Esnaf ve Destekçi Bağışı (Aylık 110.000 - 150.000 ₺)
+      localMerchantsDonationThisMonth: 135000,
       totalMerchantDonationsReceived: 0,
 
       // Personel Kadrosu
@@ -409,6 +414,7 @@ class DarulIlimGame {
 
   // Günlük açık/tamamlanmamış hadise kontrolü
   hasUncompletedEventToday() {
+    if (this.state.activeVakifEvent) return true;
     if (this.state.activeModalEvent) return true;
     if (this.state.adminMeetingData) return true;
     if (this.state.studentMeetingData) return true;
@@ -567,8 +573,8 @@ class DarulIlimGame {
     this.state.monthlyStudentAppointmentsRemaining = 3; // Her ay 3 randevu yenilenir
     this.state.monthlyGroupEventsRemaining = 4;        // Yurt stres etkinlikleri her ay 4'e yenilenir
 
-    // 1. GELİRLER: Düzenli Yerel Esnaf Bağışları (Aylık EN AZ 400.000 ₺)
-    const esnafDonation = Math.floor(Math.random() * 80000) + 400000; // 400.000 - 480.000 ₺
+    // 1. GELİRLER: Düzenli Yerel Esnaf ve Destekçi Bağışları (Aylık 110.000 - 150.000 ₺)
+    const esnafDonation = Math.floor(Math.random() * 40000) + 110000;
     this.state.localMerchantsDonationThisMonth = esnafDonation;
     this.state.totalMerchantDonationsReceived += esnafDonation;
     this.state.budget += esnafDonation;
@@ -578,17 +584,21 @@ class DarulIlimGame {
     this.state.budget += chairIncome;
 
     // 2. GİDERLER:
-    // A) Bina Kirası (Tahsisli veya 5. Seviye ise 0 ₺)
+    // A) Bina Kirası ve Bakım/Faturalar (Doğalgaz, elektrik, su, internet)
     let rentCost = 0;
+    let bldgMaintenance = 28000;
     if (typeof INSTITUTION_BUILDINGS_DATA !== "undefined") {
       const bldg = INSTITUTION_BUILDINGS_DATA.find(b => b.id === this.state.currentBuildingId);
-      if (this.state.isBuildingAllocated || (bldg && bldg.level === 5)) {
-        rentCost = 0;
-      } else {
-        rentCost = bldg ? bldg.monthlyRent : (this.state.monthlyRent || 42000);
+      if (bldg) {
+        bldgMaintenance = bldg.maintenanceCost || 28000;
+        if (this.state.isBuildingAllocated || bldg.level === 5) {
+          rentCost = 0;
+        } else {
+          rentCost = bldg.monthlyRent;
+        }
       }
     } else {
-      rentCost = this.state.isBuildingAllocated ? 0 : (this.state.monthlyRent || 42000);
+      rentCost = this.state.isBuildingAllocated ? 0 : (this.state.monthlyRent || 48000);
     }
 
     // B) Öğrenci Bursları
@@ -600,7 +610,7 @@ class DarulIlimGame {
     this.state.scholarBudget.totalMonthlyCost = scholarsCost;
     const netScholarCost = Math.max(0, scholarsCost - chairIncome);
 
-    // D) Personel Maaşları
+    // D) Personel Maaşları (Müdür Yrd., Yurt Md., Aşçı, Muhasebeci, Temizlik)
     let staffCost = 0;
     if (this.state.viceDirector) staffCost += this.state.viceDirector.monthlySalary;
     if (this.state.dormManager) staffCost += this.state.dormManager.monthlySalary;
@@ -610,17 +620,45 @@ class DarulIlimGame {
       staffCost += this.state.cleaningStaff.reduce((a, b) => a + b.monthlySalary, 0);
     }
 
-    // E) Yurt Bakım & Mutfak
-    let dormCost = 20000;
+    // E) Talebe Başına Mutfak/İaşe Gideri (Kahvaltı, öğle, akşam, et, meyve, kuru gıda)
+    const perStudentFoodCost = 5500; // Aylık talebe başına 5.500 ₺ mutfak iaşesi
+    const totalFoodCost = activeStudents.length * perStudentFoodCost;
+
+    // F) Yurt Bakım, Isınma ve Ortak Giderler
+    let dormCost = 58000;
     if (typeof DORM_BUILDINGS_DATA !== "undefined") {
       const dorm = DORM_BUILDINGS_DATA.find(d => d.id === this.state.currentDormId);
-      dormCost = (dorm ? dorm.monthlyCost : 20000) + (this.state.upgrades.dormDining * 8000);
+      dormCost = (dorm ? dorm.monthlyCost : 58000) + (this.state.upgrades.dormDining * 12000);
     } else {
-      dormCost = this.state.dormStatus.monthlyMaintenanceCost + (this.state.upgrades.dormDining * 8000);
+      dormCost = this.state.dormStatus.monthlyMaintenanceCost + (this.state.upgrades.dormDining * 12000);
     }
 
-    const totalExpense = rentCost + stipendCost + netScholarCost + staffCost + dormCost;
+    // Toplam Aylık Gider
+    const totalExpense = rentCost + stipendCost + netScholarCost + staffCost + dormCost + bldgMaintenance + totalFoodCost;
     this.state.budget -= totalExpense;
+
+    // 3. BÜTÇE AÇIĞI RİSKİ (Kasa Sıfırın Altına İndiğinde Memnuniyet ve İtibar Hızla Erir)
+    if (this.state.budget < 0) {
+      const deficit = Math.abs(this.state.budget);
+      const repPenalty = Math.min(8, Math.max(3, Math.ceil(deficit / 60000)));
+      const cohesionPenalty = Math.min(20, Math.max(8, Math.ceil(deficit / 30000)));
+      const stressIncrease = Math.min(18, Math.max(8, Math.ceil(deficit / 35000)));
+
+      this.state.reputation = Math.max(5, this.state.reputation - repPenalty);
+      this.state.socialCohesion = Math.max(5, (this.state.socialCohesion || 55) - cohesionPenalty);
+      this.state.dormStatus.satisfaction = Math.max(10, this.state.dormStatus.satisfaction - cohesionPenalty);
+
+      activeStudents.forEach(st => {
+        st.stressLevel = Math.min(98, st.stressLevel + stressIncrease);
+        st.satisfaction = Math.max(10, (st.satisfaction || 70) - cohesionPenalty);
+      });
+
+      this.addNotification({
+        title: `🚨 VAKIF BÜTÇE AÇIĞI VE MALİ KRİZ!`,
+        message: `Vakıf kasası eksiye (${this.state.budget.toLocaleString('tr-TR')} ₺) düştü! Maaş, fatura ve burs ödemeleri aksadığı için talebe memnuniyeti (-${cohesionPenalty}) ve kurum itibarı (-${repPenalty}) hızla eriyor!`,
+        type: "warning"
+      });
+    }
 
     // Muhasebe için bilanço kaydı oluştur
     this.state.lastMonthlyFinances = {
@@ -631,7 +669,8 @@ class DarulIlimGame {
       staffCost: staffCost,
       stipendCost: stipendCost,
       rentCost: rentCost,
-      dormCost: dormCost,
+      dormCost: dormCost + bldgMaintenance,
+      foodCost: totalFoodCost,
       netCashFlow: (esnafDonation + chairIncome) - totalExpense
     };
 
@@ -927,6 +966,105 @@ class DarulIlimGame {
     if (this.state.currentDay === 6 || this.state.currentDay === 16 || this.state.currentDay === 26) {
       this.processDailyDormIncidents();
     }
+
+    // 8. RASTGELE VAKIF GÜNDEMİ VE YÖNETİM KURULU İMTİHANLARI (Modern Türkiye Gerçekleri)
+    // Her ayın 8 ve 22. günlerinde kritik yönetim kurulu kararları masaya gelir
+    if ((this.state.currentDay === 8 || this.state.currentDay === 22) && !this.state.activeVakifEvent && !this.state.activeModalEvent) {
+      this.triggerRandomVakifEvent();
+    }
+  }
+
+  // Rastgele Vakıf Gündemi Tetikle
+  triggerRandomVakifEvent() {
+    if (typeof VAKIF_EVENTS_DATA === "undefined" || !VAKIF_EVENTS_DATA || VAKIF_EVENTS_DATA.length === 0) return;
+
+    if (!this.state.vakifEventHistory) this.state.vakifEventHistory = [];
+
+    // Henüz yaşanmamış senaryoları filtrele
+    let availableEvents = VAKIF_EVENTS_DATA.filter(ev => !this.state.vakifEventHistory.includes(ev.id));
+    if (availableEvents.length === 0) {
+      // Tüm havuz oynandıysa geçmişi tazele
+      this.state.vakifEventHistory = [];
+      availableEvents = VAKIF_EVENTS_DATA;
+    }
+
+    const selectedEvent = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+    this.state.activeVakifEvent = selectedEvent;
+
+    this.addNotification({
+      title: `⚡ Vakıf Meclisi Gündemi: ${selectedEvent.title}`,
+      message: `Yönetim kurulu kritik bir karar almak üzere toplandı: '${selectedEvent.title}'. Lütfen kararı belirleyiniz.`,
+      type: "decision"
+    });
+  }
+
+  // Vakıf Gündemi Kararını Uygula
+  resolveVakifEvent(optionIndex) {
+    const ev = this.state.activeVakifEvent;
+    if (!ev || !ev.options || !ev.options[optionIndex]) return null;
+
+    const opt = ev.options[optionIndex];
+
+    // 1. Mali etki (TL)
+    if (typeof opt.cost === "number") {
+      this.state.budget -= opt.cost;
+    }
+
+    // 2. İtibar etkisi
+    if (opt.reputationDelta) {
+      this.state.reputation = Math.max(5, Math.min(100, this.state.reputation + opt.reputationDelta));
+    }
+
+    // 3. Uhuvvet ve Talebe Memnuniyeti
+    if (opt.cohesionDelta) {
+      this.state.socialCohesion = Math.max(5, Math.min(100, (this.state.socialCohesion || 55) + opt.cohesionDelta));
+      this.state.dormStatus.satisfaction = Math.max(10, Math.min(100, this.state.dormStatus.satisfaction + opt.cohesionDelta));
+      this.state.students.forEach(st => {
+        st.satisfaction = Math.max(10, Math.min(100, (st.satisfaction || 70) + opt.cohesionDelta));
+      });
+    }
+
+    // 4. Stres seviyesi
+    if (opt.stressDelta) {
+      this.state.students.forEach(st => {
+        st.stressLevel = Math.max(5, Math.min(98, st.stressLevel + opt.stressDelta));
+      });
+    }
+
+    // 5. Akademik / İlim Puanı
+    if (opt.academicDelta) {
+      this.state.academicPoints = Math.max(0, (this.state.academicPoints || 0) + opt.academicDelta);
+      this.state.students.forEach(st => {
+        st.academicCompetence = Math.min(100, (st.academicCompetence || 50) + Math.round(opt.academicDelta / 2));
+      });
+    }
+
+    // Geçmişe kaydet
+    if (!this.state.vakifEventHistory) this.state.vakifEventHistory = [];
+    this.state.vakifEventHistory.push(ev.id);
+
+    const outcomeData = {
+      eventTitle: ev.title,
+      selectedOption: opt.label,
+      outcomeText: opt.outcomeText,
+      cost: opt.cost || 0,
+      reputationDelta: opt.reputationDelta || 0,
+      cohesionDelta: opt.cohesionDelta || 0,
+      stressDelta: opt.stressDelta || 0,
+      academicDelta: opt.academicDelta || 0
+    };
+
+    this.state.lastVakifEventOutcome = outcomeData;
+    this.state.activeVakifEvent = null;
+
+    this.addNotification({
+      title: `📋 Karar İcra Edildi: ${ev.title}`,
+      message: `${opt.label} kararı alındı. ${opt.outcomeText}`,
+      type: "decision"
+    });
+
+    this.saveToStorage();
+    return outcomeData;
   }
 
   // Müdür Yardımcısının Stres Danışması
@@ -1492,10 +1630,10 @@ class DarulIlimGame {
       };
     }
 
-    // 500.000 ₺ ile 1.500.000 ₺ arasında bağış toplanır!
-    const baseYield = Math.floor(Math.random() * 1000000) + 500000;
-    const attendingFactor = Math.min(1.5, 0.7 + (attendingDonorsCount * 0.1));
-    const totalDonationCollected = Math.round(Math.min(1500000, Math.max(500000, baseYield * attendingFactor)));
+    // Güncellenen ve Dengelenen Bağış Yemeği (180.000 ₺ - 350.000 ₺ arası dengeli nakit girişi)
+    const baseYield = Math.floor(Math.random() * 90000) + 160000;
+    const attendingFactor = Math.min(1.4, 0.8 + (attendingDonorsCount * 0.08));
+    const totalDonationCollected = Math.round(Math.min(350000, Math.max(160000, baseYield * attendingFactor)));
 
     this.state.budget += totalDonationCollected;
     this.saveToStorage();
@@ -1534,7 +1672,7 @@ class DarulIlimGame {
 
     let resultMessage = "";
     if (requestType === "burs") {
-      const donation = donor.wealth === "Çok Yüksek" ? 450000 : (donor.wealth === "Yüksek" ? 220000 : 100000);
+      const donation = donor.wealth === "Çok Yüksek" ? 190000 : (donor.wealth === "Yüksek" ? 100000 : 45000);
       this.state.budget += donation;
       resultMessage = `${donor.name} talebe burs fonumuza ${donation.toLocaleString('tr-TR')} ₺ nakdi bağış aktardı!`;
     } else if (requestType === "hocaKursusu") {
@@ -1542,7 +1680,7 @@ class DarulIlimGame {
       this.state.scholarBudget.sponsoredChairsCount++;
       resultMessage = `MÜJDE! ${donor.name} kurumumuzda bir "Klasik İlimler Kürsüsü" kurdu ve bir müderrisimizin 1 yıllık telif/maaşını (Aylık 28.000 ₺) bilfiil üstlendi!`;
     } else if (requestType === "egitimFonu") {
-      const donation = donor.wealth === "Çok Yüksek" ? 350000 : 150000;
+      const donation = donor.wealth === "Çok Yüksek" ? 140000 : 65000;
       this.state.budget += donation;
       resultMessage = `${donor.name} talebelerimizin lisansüstü eğitim fonuna ${donation.toLocaleString('tr-TR')} ₺ aktardı!`;
     } else if (requestType === "gezi") {
@@ -1561,12 +1699,12 @@ class DarulIlimGame {
       this.state.upgrades.officeFurnishing = Math.min(3, this.state.upgrades.officeFurnishing + 1);
       resultMessage = `${donor.name} tarihi binamızın ahşap tefrişat ve restorasyonunu yaptırdı.`;
     } else if (requestType === "kamuTahsisi") {
-      this.state.budget += 150000;
-      resultMessage = `${donor.name} bakanlık gençlik fonundan kurumumuza 150.000 ₺ proje hibesi çıkarttı.`;
+      this.state.budget += 60000;
+      resultMessage = `${donor.name} bakanlık gençlik fonundan kurumumuza 60.000 ₺ proje hibesi çıkarttı.`;
     } else if (requestType === "konferansButcesi") {
-      this.state.budget += 75000;
+      this.state.budget += 35000;
       this.state.reputation += 1;
-      resultMessage = `${donor.name} uluslararası sempozyum bütçesi için 75.000 ₺ tahsis etti. İtibarımız +1 arttı!`;
+      resultMessage = `${donor.name} uluslararası sempozyum bütçesi için 35.000 ₺ tahsis etti. İtibarımız +1 arttı!`;
     }
 
     donor.trustScore = Math.min(98, donor.trustScore + 4);

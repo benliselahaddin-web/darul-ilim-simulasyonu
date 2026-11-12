@@ -88,6 +88,7 @@ function renderAll() {
   else if (currentTab === "graduates") renderGraduatesTab();
 
   // Aktif Modalları Çiz
+  renderVakifGundemiModal();
   renderActiveModalEvent();
   renderAdminMeetingModal();
   renderStudentMeetingModal();
@@ -152,11 +153,16 @@ function renderHeader() {
   const dateEl = document.getElementById("headerDate");
   if (dateEl) dateEl.innerText = `${s.currentDay} ${MONTH_NAMES[s.currentMonthIndex]}`;
 
-  // Kasa
+  // Kasa (Bütçe Açığı Durumunda Kırmızı Vurgu ve Uyarı İkonu)
   const budgetEl = document.getElementById("headerBudget");
   if (budgetEl) {
-    budgetEl.innerText = `${s.budget.toLocaleString('tr-TR')} ₺`;
-    budgetEl.className = s.budget < 0 ? "text-red-600 font-bold" : "text-emerald-700 font-bold";
+    if (s.budget < 0) {
+      budgetEl.innerHTML = `<span class="inline-flex items-center gap-1 text-red-600 font-extrabold animate-pulse">⚠️ ${s.budget.toLocaleString('tr-TR')} ₺ (Açık)</span>`;
+      budgetEl.className = "text-sm font-extrabold text-red-600";
+    } else {
+      budgetEl.innerText = `${s.budget.toLocaleString('tr-TR')} ₺`;
+      budgetEl.className = "text-sm font-bold text-emerald-700";
+    }
   }
 
   // İtibar
@@ -3751,6 +3757,159 @@ function handleEventOptionClick(idx) {
     event.options[idx].action();
   }
 }
+
+// Vakıf Gündemi & Yönetim Kurulu Karar Modalları
+function renderVakifGundemiModal() {
+  const gundemModal = document.getElementById("vakifGundemiModal");
+  const outcomeModal = document.getElementById("vakifOutcomeModal");
+  if (!gundemModal || !outcomeModal) return;
+
+  const outcome = game.state.lastVakifEventOutcome;
+  const activeEv = game.state.activeVakifEvent;
+
+  // 1. Önce Netice Modalı Gösterimi (varsa)
+  if (outcome) {
+    gundemModal.classList.add("hidden");
+    outcomeModal.classList.remove("hidden");
+
+    const titleEl = document.getElementById("vakifOutcomeTitle");
+    const textEl = document.getElementById("vakifOutcomeText");
+    const impactsEl = document.getElementById("vakifOutcomeImpacts");
+
+    if (titleEl) titleEl.innerText = `${outcome.eventTitle} (${outcome.selectedOption})`;
+    if (textEl) textEl.innerText = outcome.outcomeText;
+
+    if (impactsEl) {
+      let badges = [];
+      // Maliyet rozeti
+      if (outcome.cost > 0) {
+        badges.push(`<div class="p-2 rounded-xl bg-red-50 border border-red-200 text-red-800 font-bold text-[11px]"><div class="text-[9px] uppercase tracking-wider text-red-500 font-semibold">Kasa Gideri</div>-${outcome.cost.toLocaleString('tr-TR')} ₺</div>`);
+      } else if (outcome.cost < 0) {
+        badges.push(`<div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-[11px]"><div class="text-[9px] uppercase tracking-wider text-emerald-500 font-semibold">Kasa Geliri</div>+${(-outcome.cost).toLocaleString('tr-TR')} ₺</div>`);
+      } else {
+        badges.push(`<div class="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-bold text-[11px]"><div class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Kasa</div>0 ₺</div>`);
+      }
+
+      // İtibar rozeti
+      if (outcome.reputationDelta) {
+        const sign = outcome.reputationDelta > 0 ? "+" : "";
+        const color = outcome.reputationDelta > 0 ? "emerald" : "red";
+        badges.push(`<div class="p-2 rounded-xl bg-${color}-50 border border-${color}-200 text-${color}-800 font-bold text-[11px]"><div class="text-[9px] uppercase tracking-wider text-${color}-500 font-semibold">Genel İtibar</div>${sign}${outcome.reputationDelta} Puan</div>`);
+      } else {
+        badges.push(`<div class="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-bold text-[11px]"><div class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">İtibar</div>Değişmedi</div>`);
+      }
+
+      // Uhuvvet rozeti
+      if (outcome.cohesionDelta) {
+        const sign = outcome.cohesionDelta > 0 ? "+" : "";
+        const color = outcome.cohesionDelta > 0 ? "emerald" : "amber";
+        badges.push(`<div class="p-2 rounded-xl bg-${color}-50 border border-${color}-200 text-${color}-800 font-bold text-[11px]"><div class="text-[9px] uppercase tracking-wider text-${color}-500 font-semibold">Uhuvvet & Huzur</div>${sign}%${outcome.cohesionDelta}</div>`);
+      } else {
+        badges.push(`<div class="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-bold text-[11px]"><div class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Uhuvvet</div>Değişmedi</div>`);
+      }
+
+      // Akademik rozet
+      if (outcome.academicDelta) {
+        const sign = outcome.academicDelta > 0 ? "+" : "";
+        badges.push(`<div class="p-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 font-bold text-[11px]"><div class="text-[9px] uppercase tracking-wider text-blue-500 font-semibold">İlim Seviyesi</div>${sign}${outcome.academicDelta} Puan</div>`);
+      } else {
+        badges.push(`<div class="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-bold text-[11px]"><div class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">İlim</div>Değişmedi</div>`);
+      }
+
+      impactsEl.innerHTML = badges.join('');
+    }
+    return;
+  }
+
+  outcomeModal.classList.add("hidden");
+
+  // 2. Aktif Gündem Olayı Gösterimi (varsa)
+  if (activeEv) {
+    gundemModal.classList.remove("hidden");
+
+    const badgeEl = document.getElementById("vakifEventBadge");
+    const titleEl = document.getElementById("vakifEventTitle");
+    const dateEl = document.getElementById("vakifEventDate");
+    const descEl = document.getElementById("vakifEventDescription");
+    const optionsEl = document.getElementById("vakifEventOptions");
+
+    if (badgeEl) {
+      const bText = activeEv.badge ? activeEv.badge.text : (activeEv.category || "Vakıf Gündemi");
+      const bBg = activeEv.badge?.bg || "bg-amber-100";
+      const bCol = activeEv.badge?.textCol || "text-amber-800";
+      badgeEl.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold ${bBg} ${bCol}`;
+      badgeEl.innerText = bText;
+    }
+
+    if (titleEl) titleEl.innerText = activeEv.title;
+    if (dateEl) dateEl.innerText = `${game.state.currentYear}. Akademik Yıl • Gün ${game.state.currentDay}`;
+    if (descEl) descEl.innerText = activeEv.description;
+
+    if (optionsEl && Array.isArray(activeEv.options)) {
+      optionsEl.innerHTML = activeEv.options.map((opt, idx) => {
+        let impactPills = [];
+        if (opt.cost > 0) {
+          impactPills.push(`<span class="px-2 py-0.5 rounded-md bg-red-100 text-red-800 font-bold text-[10px]">🔴 -${opt.cost.toLocaleString('tr-TR')} ₺</span>`);
+        } else if (opt.cost < 0) {
+          impactPills.push(`<span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[10px]">🟢 +${(-opt.cost).toLocaleString('tr-TR')} ₺</span>`);
+        }
+        if (opt.reputationDelta) {
+          const sign = opt.reputationDelta > 0 ? "+" : "";
+          const color = opt.reputationDelta > 0 ? "emerald" : "red";
+          impactPills.push(`<span class="px-2 py-0.5 rounded-md bg-${color}-100 text-${color}-800 font-bold text-[10px]">⭐ ${sign}${opt.reputationDelta} İtibar</span>`);
+        }
+        if (opt.cohesionDelta) {
+          const sign = opt.cohesionDelta > 0 ? "+" : "";
+          const color = opt.cohesionDelta > 0 ? "emerald" : "amber";
+          impactPills.push(`<span class="px-2 py-0.5 rounded-md bg-${color}-100 text-${color}-800 font-bold text-[10px]">🤝 ${sign}%${opt.cohesionDelta} Uhuvvet</span>`);
+        }
+        if (opt.academicDelta) {
+          const sign = opt.academicDelta > 0 ? "+" : "";
+          impactPills.push(`<span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-bold text-[10px]">📖 ${sign}${opt.academicDelta} İlim</span>`);
+        }
+
+        return `
+          <button onclick="handleSelectVakifEventOption(${idx})" class="w-full text-left p-3.5 rounded-2xl border-2 border-slate-200 hover:border-amber-500 bg-white hover:bg-amber-50/40 transition group shadow-sm flex flex-col gap-1.5">
+            <div class="flex items-center justify-between w-full">
+              <span class="font-bold text-slate-900 group-hover:text-amber-900 text-xs sm:text-sm flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-slate-100 group-hover:bg-amber-500 group-hover:text-white text-slate-600 flex items-center justify-center text-[10px] font-black">${idx + 1}</span>
+                ${opt.label}
+              </span>
+              <div class="flex flex-wrap items-center gap-1">
+                ${impactPills.join(' ')}
+              </div>
+            </div>
+            ${opt.desc ? `<p class="text-[11px] text-slate-500 pl-7 leading-relaxed">${opt.desc}</p>` : ''}
+          </button>
+        `;
+      }).join('');
+    }
+    return;
+  }
+
+  // 3. Hiçbiri yoksa ikisini de gizle
+  gundemModal.classList.add("hidden");
+  outcomeModal.classList.add("hidden");
+}
+
+function handleSelectVakifEventOption(idx) {
+  if (!game) return;
+  game.resolveVakifEvent(idx);
+  renderAll();
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function closeVakifEventOutcomeModal() {
+  if (!game) return;
+  game.state.lastVakifEventOutcome = null;
+  game.saveToStorage();
+  renderAll();
+  if (window.lucide) window.lucide.createIcons();
+}
+
+window.renderVakifGundemiModal = renderVakifGundemiModal;
+window.handleSelectVakifEventOption = handleSelectVakifEventOption;
+window.closeVakifEventOutcomeModal = closeVakifEventOutcomeModal;
 
 // Kurulum Sihirbazı Formu Gönderimi
 function handleSetupSubmit(e) {
